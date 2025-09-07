@@ -101,68 +101,53 @@ Crear el archivo models/{NOMBRE_MODELO}.php siguiendo estos lineamientos.
 **Propósito**: Agregar funcionalidad de submódulo a un modelo principal ya existente
 
 ```
-Necesito agregar los métodos para el submódulo {NOMBRE_SUBMODULO} al modelo {NOMBRE_MODELO}.php existente en el sistema de gestión de premoldeado, en caso de que no exista, deberá ser creado.
+Necesito agregar los métodos para el submódulo {NOMBRE_SUBMODULO} al sistema de gestión de premoldeado dentro de {MODELO_PADRE}, en caso de que no exista el modelo padre, deberá ser creado.
 
 **CONTEXTO DEL SISTEMA:**
-- Modelo: models/{NOMBRE_MODELO}.php (crear si no existe)
-- Submódulo: {NOMBRE_SUBMODULO} (tabla: {TABLA_SUBMODULO})
-- Patrón: Métodos estáticos, eliminación lógica
+- Base de datos: MySQL con conexión PDO en config/database.php
+- Patrón: Modelos estáticos sin instanciación
+- Estilo: Eliminación lógica con campo 'activo'
+- Convención: Métodos camelCase, nombres de tabla en plural
 
-**ESTRUCTURA DEL SUBMÓDULO:**
-Tabla: {TABLA_SUBMODULO}
-Campos: {CAMPOS_SUBMODULO}
-Relación con módulo principal: {RELACION_PRINCIPAL}
+**SUBMÓDULO A DESARROLLAR:**
+{NOMBRE_SUBMODULO}
 
-**MÉTODOS A AGREGAR:**
+**INSTRUCCIONES:**
+1. **Analizar la base de datos** para identificar:
+   - La tabla del submódulo y sus campos
+   - El módulo principal al que pertenece
+   - Las relaciones con otras tablas
+   - Los campos obligatorios y opcionales
 
-```php
-// ========================================
-// MÉTODOS PARA {NOMBRE_SUBMODULO}
-// ========================================
+2. **Crear estructura del modelo completa para ese submódulo con comentarios y debidamente separado con comentarios de las demas funciones del modelo principal no pertenecientes al submódulo**:
+   - Determinar el nombre del modelo principal basándose en la configuración
+   - Crear el archivo del modelo si no existe
+   - Agregar métodos CRUD estándar para el submódulo:
+     * obtenerTodos{NOMBRE_SUBMODULO}() - Listar registros activos
+     * obtener{NOMBRE_SUBMODULO}PorId($id) - Obtener registro específico  
+     * crear{NOMBRE_SUBMODULO}($datos) - Insertar nuevo registro
+     * actualizar{NOMBRE_SUBMODULO}($id, $datos) - Modificar registro existente
+     * eliminar{NOMBRE_SUBMODULO}($id) - Eliminación lógica (activo = 0)
 
-/**
- * Obtener todos los {NOMBRE_SUBMODULO} activos
- */
-public static function obtenerTodos{NOMBRE_SUBMODULO}() {
-    // Implementar consulta con joins si es necesario
-}
+3. **Implementar validaciones automáticas**:
+   - Validación de campos obligatorios según estructura de tabla
+   - Validación de unicidad donde corresponda
+   - Sanitización de datos de entrada
+   - Manejo de errores con try-catch
 
-/**
- * Obtener {NOMBRE_SUBMODULO} por ID
- */
-public static function obtener{NOMBRE_SUBMODULO}PorId($id) {
-    // Implementar consulta específica
-}
+4. **Seguir patrones establecidos**:
+   - Usar prepared statements para todas las consultas
+   - Incluir documentación PHPDoc en métodos
+   - Agrupar métodos del submódulo con comentario separador
+   - Mantener consistencia con el modelo Usuario.php existente
 
-/**
- * Crear nuevo {NOMBRE_SUBMODULO}
- */
-public static function crear{NOMBRE_SUBMODULO}($datos) {
-    // Validar y crear registro
-}
+**ESPECIFICACIONES TÉCNICAS:**
+- Todos los métodos deben retornar arrays asociativos
+- Implementar logging de errores críticos
+- Usar el mismo patrón de conexión a base de datos que Usuario.php
+- Considerar relaciones con tablas padre si las hay
 
-/**
- * Actualizar {NOMBRE_SUBMODULO}
- */
-public static function actualizar{NOMBRE_SUBMODULO}($id, $datos) {
-    // Validar y actualizar registro
-}
-
-/**
- * Eliminar {NOMBRE_SUBMODULO} (lógico)
- */
-public static function eliminar{NOMBRE_SUBMODULO}($id) {
-    // Eliminación lógica
-}
-```
-
-**ESPECIFICACIONES:**
-- Mantener consistencia con métodos existentes del modelo
-- Usar el mismo patrón de validación y sanitización
-- Incluir documentación PHPDoc
-- Agrupar métodos del submódulo con comentario separador
-
-Agregar estos métodos al archivo models/{NOMBRE_MODELO}.php existente.
+Analiza la base de datos, revisa la configuración del sistema y crea/actualiza el modelo correspondiente para el submódulo {NOMBRE_SUBMODULO}.
 ```
 
 ---
@@ -270,81 +255,52 @@ Crear el archivo controllers/{NOMBRE_CONTROLADOR}Controller.php con esta estruct
 **Propósito**: Agregar métodos para submódulo a un controlador principal existente
 
 ```
-Necesito agregar los métodos para el submódulo {NOMBRE_SUBMODULO} al controlador {NOMBRE_CONTROLADOR}Controller.php existente.
+Necesito agregar los métodos del controlador para el submódulo {NOMBRE_SUBMODULO} al sistema de gestión de premoldeado.
 
-**CONTEXTO:**
-- Controlador existente: controllers/{NOMBRE_CONTROLADOR}Controller.php
-- Submódulo: {NOMBRE_SUBMODULO}
-- Métodos del modelo disponibles: {METODOS_MODELO_SUBMODULO}
+**CONTEXTO DEL SISTEMA:**
+- Herencia: Extiende BaseController (autenticación automática)
+- Patrón: Métodos estáticos para acciones CRUD
+- Respuesta: JSON para AJAX, redirecciones para formularios
+- Validación: Usar métodos heredados validarDatos() y sanitizarDatos()
 
-**MÉTODOS A AGREGAR:**
+**SUBMÓDULO A DESARROLLAR:**
+{NOMBRE_SUBMODULO}
 
-```php
-// ========================================
-// MÉTODOS PARA {NOMBRE_SUBMODULO}
-// ========================================
+**INSTRUCCIONES:**
+1. **Analizar automáticamente**:
+   - Revisar configuración en Usuario.php para identificar el módulo principal
+   - Determinar el nombre del controlador principal
+   - Verificar el ID del módulo para permisos
+   - Identificar los métodos del modelo disponibles
 
-/**
- * Listar {NOMBRE_SUBMODULO}
- */
-public static function index{NOMBRE_SUBMODULO}() {
-    // Verificar acceso al módulo
-    // Obtener datos del modelo
-    // Renderizar vista específica del submódulo
-}
+2. **Crear/actualizar controlador** con métodos estándar:
+   - index{NOMBRE_SUBMODULO}() - Listar registros
+   - create{NOMBRE_SUBMODULO}() - Mostrar formulario de creación
+   - store{NOMBRE_SUBMODULO}() - Procesar creación de registro
+   - edit{NOMBRE_SUBMODULO}($id) - Mostrar formulario de edición
+   - update{NOMBRE_SUBMODULO}($id) - Procesar actualización
+   - delete{NOMBRE_SUBMODULO}($id) - Eliminación lógica
 
-/**
- * Crear {NOMBRE_SUBMODULO}
- */
-public static function create{NOMBRE_SUBMODULO}() {
-    // Verificar acceso
-    // Renderizar formulario
-}
+3. **Implementar validaciones automáticas**:
+   - Analizar estructura de tabla para generar reglas de validación
+   - Usar verificarAccesoModulo() con el ID del módulo principal
+   - Implementar sanitización de datos
+   - Manejo de errores con try-catch
 
-/**
- * Procesar creación de {NOMBRE_SUBMODULO}
- */
-public static function store{NOMBRE_SUBMODULO}() {
-    // Validar datos POST
-    // Crear registro
-    // Responder
-}
+4. **Estructura estándar de métodos**:
+   - Verificar acceso al módulo en cada método
+   - Usar jsonResponse() para respuestas AJAX
+   - Implementar redirecciones apropiadas
+   - Incluir logs para operaciones críticas
 
-/**
- * Editar {NOMBRE_SUBMODULO}
- */
-public static function edit{NOMBRE_SUBMODULO}($id) {
-    // Verificar acceso
-    // Obtener datos existentes
-    // Renderizar formulario de edición
-}
-
-/**
- * Actualizar {NOMBRE_SUBMODULO}
- */
-public static function update{NOMBRE_SUBMODULO}($id) {
-    // Validar datos POST
-    // Actualizar registro
-    // Responder
-}
-
-/**
- * Eliminar {NOMBRE_SUBMODULO}
- */
-public static function delete{NOMBRE_SUBMODULO}($id) {
-    // Verificar acceso
-    // Eliminar (lógico)
-    // Responder JSON
-}
-```
-
-**ESPECIFICACIONES:**
-- Mantener consistencia con métodos existentes
-- Usar verificarAccesoModulo() con el ID del módulo principal
+**ESPECIFICACIONES TÉCNICAS:**
+- Mantener consistencia con métodos existentes del controlador
 - Seguir el mismo patrón de validación y respuesta
 - Incluir documentación PHPDoc
+- Agrupar métodos del submódulo con comentario separador
+- Usar métodos heredados de BaseController
 
-Agregar estos métodos al controlador {NOMBRE_CONTROLADOR}Controller.php existente.
+Analiza el sistema, identifica el controlador principal y agrega los métodos para el submódulo {NOMBRE_SUBMODULO}.
 ```
 
 ---
@@ -454,122 +410,112 @@ Modificar los archivos de vista para conectarlos completamente con el controlado
 **Propósito**: Integrar las vistas de un submódulo específico con los métodos del controlador principal
 
 ```
-Necesito integrar las vistas del submódulo {NOMBRE_SUBMODULO} (que pertenece al módulo {NOMBRE_MODULO}) con los métodos correspondientes del controlador {NOMBRE_CONTROLADOR}Controller.php.
+Necesito integrar completamente las vistas del submódulo {NOMBRE_SUBMODULO} con el sistema de gestión de premoldeado.
 
-**CONTEXTO:**
-- Submódulo: {NOMBRE_SUBMODULO}
-- Carpeta: views/pages/{CARPETA_SUBMODULO}/
-- Métodos del controlador: {METODOS_CONTROLADOR_SUBMODULO}
+**CONTEXTO DEL SISTEMA:**
+- Framework: Bootstrap 5.3.2 con Font Awesome 6.4.0
+- Patrón: Formularios HTML con procesamiento PHP
+- Componentes: table.php reutilizable para listados
+- Estilo: Diseño consistente con el sistema existente
 
-**ARCHIVOS A MODIFICAR:**
-- views/pages/{CARPETA_SUBMODULO}/listado_{NOMBRE_SUBMODULO}.php
-- views/pages/{CARPETA_SUBMODULO}/crear_{NOMBRE_SUBMODULO}.php  
-- views/pages/{CARPETA_SUBMODULO}/editar_{NOMBRE_SUBMODULO}.php
+**SUBMÓDULO A INTEGRAR:**
+{NOMBRE_SUBMODULO}
 
-**CONFIGURACIÓN DE TABLA:**
-```php
-$config = [
-    'id' => '{SUBMODULO_TABLE_ID}',
-    'columns' => [
-        {COLUMNAS_SUBMODULO}
-    ],
-    'actions' => [
-        ['label' => 'Editar', 'icon' => 'fas fa-edit', 'onclick' => 'editar{NOMBRE_SUBMODULO}({id})'],
-        ['label' => 'Eliminar', 'icon' => 'fas fa-trash', 'onclick' => 'eliminar{NOMBRE_SUBMODULO}({id})']
-    ]
-];
-```
+**INSTRUCCIONES:**
+1. **Analizar automáticamente**:
+   - Revisar configuración en Usuario.php para identificar módulo principal y URLs
+   - Determinar la estructura de carpetas del submódulo
+   - Identificar los campos de la tabla para formularios
+   - Verificar métodos del controlador disponibles
 
-**CAMPOS DEL FORMULARIO:**
-{CAMPOS_FORMULARIO_SUBMODULO}
+2. **Configurar archivos de vista**:
+   - Actualizar views/pages/[carpeta]/listado_[submodulo].php
+   - Actualizar views/pages/[carpeta]/crear_[submodulo].php  
+   - Actualizar views/pages/[carpeta]/editar_[submodulo].php
 
-**NAVEGACIÓN:**
-- Breadcrumb: {NOMBRE_MODULO} → {NOMBRE_SUBMODULO}
-- Botón "Volver al módulo principal"
-- Enlaces de navegación entre submódulos relacionados
+3. **Generar configuración automática de tabla**:
+   - Analizar campos de la tabla para definir columnas
+   - Crear configuración $config con campos apropiados
+   - Implementar acciones estándar (Editar, Eliminar)
+   - Generar funciones JavaScript correspondientes
 
-**CONEXIONES CON CONTROLADOR:**
-- Listado: {NOMBRE_CONTROLADOR}Controller::index{NOMBRE_SUBMODULO}()
-- Creación: {NOMBRE_CONTROLADOR}Controller::create{NOMBRE_SUBMODULO}() y store{NOMBRE_SUBMODULO}()
-- Edición: {NOMBRE_CONTROLADOR}Controller::edit{NOMBRE_SUBMODULO}() y update{NOMBRE_SUBMODULO}()
-- Eliminación: {NOMBRE_CONTROLADOR}Controller::delete{NOMBRE_SUBMODULO}()
+4. **Crear formularios automáticos**:
+   - Generar campos de formulario basados en estructura de tabla
+   - Implementar validación HTML5 apropiada
+   - Configurar elementos select para relaciones con otras tablas
+   - Agregar campos de estado (activo/inactivo)
 
-**ESPECIFICACIONES:**
-- Mantener consistencia visual con el módulo principal
-- Implementar validación frontend apropiada
-- Agregar navegación clara de regreso al módulo principal
+5. **Implementar navegación**:
+   - Breadcrumbs automáticos: [Módulo Principal] → [Submódulo]
+   - Botones de navegación entre vistas
+   - Enlaces de regreso al módulo principal
+   - Iconos Font Awesome apropiados
+
+6. **Conectar con controlador**:
+   - Integrar llamadas a métodos del controlador
+   - Implementar procesamiento de formularios
+   - Configurar respuestas AJAX para eliminación
+   - Agregar mensajes de éxito/error
+
+**ESPECIFICACIONES TÉCNICAS:**
+- Mantener diseño Bootstrap consistente
+- Implementar validación frontend y backend
 - Usar iconos específicos para el tipo de submódulo
+- Manejar estados de carga y error
+- Responsive design para diferentes dispositivos
 
-Modificar las vistas del submódulo {NOMBRE_SUBMODULO} para integrarlas completamente.
+Analiza el sistema, identifica la estructura del submódulo y crea/actualiza todas las vistas necesarias para {NOMBRE_SUBMODULO}.
 ```
 
 ---
 
-## 📝 EJEMPLOS DE USO
+## 📝 EJEMPLOS DE USO SIMPLIFICADOS
 
-### Ejemplo 1: Desarrollar módulo principal con submódulos (PRODUCTOS)
+### Ejemplo 1: Desarrollar submódulo "Perfiles"
 
-**Paso 1A - Modelo Principal:**
-Usar PROMPT 1A reemplazando:
-- {NOMBRE_MODELO} → "Producto"
-- {NOMBRE_MODULO} → "Productos"
-- {NOMBRE_TABLA} → "productos"
-- {LISTAR_CAMPOS_PRINCIPALES} → "id, ancho, largo, cantidad_disponible, stock_minimo, precio_unitario, tipo_producto_id, activo"
-- {LISTAR_SUBMODULOS_Y_TABLAS} → "Tipos de Producto (tabla: tipo_producto)"
-- {LISTAR_TABLAS_RELACIONADAS} → "tipo_producto (relación many-to-one)"
-- {METODOS_SUBMODULOS} → "obtenerTodosTipoProducto(), crearTipoProducto(), actualizarTipoProducto(), eliminarTipoProducto()"
+**Paso 1B - Modelo:**
+```
+Necesito agregar los métodos para el submódulo Perfiles al sistema de gestión de premoldeado, en caso de que no exista el modelo padre, deberá ser creado.
 
-**Paso 2A - Controlador Principal:**
-Usar PROMPT 2A reemplazando:
-- {NOMBRE_CONTROLADOR} → "Producto"
-- {CODIGO_MODULO} → "3"
-- {LISTAR_SUBMODULOS_CON_METODOS} → "Tipos de Producto: indexTipoProducto(), createTipoProducto(), storeTipoProducto()"
+[... resto del PROMPT 1B ...]
 
-**Paso 3A - Vistas Principal con Submódulos:**
-Usar PROMPT 3A reemplazando:
-- {NOMBRE_MODULO} → "productos"
-- {CARPETA_MODULO} → "productos"
-- {LISTAR_SUBMODULOS_Y_CARPETAS} → "Tipos de Producto (views/pages/productos/tipos/)"
+**SUBMÓDULO A DESARROLLAR:**
+Perfiles
+```
 
-### Ejemplo 2: Desarrollar submódulo específico (MÉTODOS DE PAGO en VENTAS)
+**Paso 2B - Controlador:**
+```
+Necesito agregar los métodos del controlador para el submódulo Perfiles al sistema de gestión de premoldeado.
 
-**Paso 1B - Agregar al Modelo Ventas:**
-Usar PROMPT 1B reemplazando:
-- {NOMBRE_SUBMODULO} → "MetodoPago"
-- {NOMBRE_MODELO} → "Venta"
-- {TABLA_SUBMODULO} → "metodo_pago"
-- {CAMPOS_SUBMODULO} → "id, nombre, activo"
+[... resto del PROMPT 2B ...]
 
-**Paso 2B - Agregar al Controlador Ventas:**
-Usar PROMPT 2B reemplazando:
-- {NOMBRE_SUBMODULO} → "MetodoPago"
-- {NOMBRE_CONTROLADOR} → "Venta"
+**SUBMÓDULO A DESARROLLAR:**
+Perfiles
+```
 
-**Paso 3B - Integrar Vistas del Submódulo:**
-Usar PROMPT 3B reemplazando:
-- {NOMBRE_SUBMODULO} → "metodos_pago"
-- {NOMBRE_MODULO} → "Ventas"
-- {CARPETA_SUBMODULO} → "ventas/metodos_pago"
+**Paso 3B - Vistas:**
+```
+Necesito integrar completamente las vistas del submódulo Perfiles con el sistema de gestión de premoldeado.
 
-### Ejemplo 3: Desarrollar módulo independiente simple (CLIENTES)
+[... resto del PROMPT 3B ...]
 
-**Paso 1A - Modelo (sin submódulos):**
-Usar PROMPT 1A reemplazando:
-- {NOMBRE_MODELO} → "Cliente"
-- {NOMBRE_MODULO} → "Clientes"
-- {LISTAR_SUBMODULOS_Y_TABLAS} → "Ninguno"
-- {METODOS_SUBMODULOS} → "No aplica"
+**SUBMÓDULO A INTEGRAR:**
+Perfiles
+```
 
-**Paso 2A - Controlador (sin submódulos):**
-Usar PROMPT 2A reemplazando:
-- {NOMBRE_CONTROLADOR} → "Cliente"
-- {CODIGO_MODULO} → "2"
-- {LISTAR_SUBMODULOS_CON_METODOS} → "Ninguno"
+### Ejemplo 2: Desarrollar submódulo "TipoProducto"
 
-**Paso 3A - Vistas (sin submódulos):**
-Usar PROMPT 3A reemplazando:
-- {NOMBRE_MODULO} → "clientes"
-- {LISTAR_SUBMODULOS_Y_CARPETAS} → "Ninguno"
+**Solo necesitas cambiar el nombre:**
+- PROMPT 1B: `{NOMBRE_SUBMODULO}` → `TipoProducto`
+- PROMPT 2B: `{NOMBRE_SUBMODULO}` → `TipoProducto`  
+- PROMPT 3B: `{NOMBRE_SUBMODULO}` → `TipoProducto`
+
+### Ejemplo 3: Desarrollar submódulo "MetodoPago"
+
+**Solo necesitas cambiar el nombre:**
+- PROMPT 1B: `{NOMBRE_SUBMODULO}` → `MetodoPago`
+- PROMPT 2B: `{NOMBRE_SUBMODULO}` → `MetodoPago`
+- PROMPT 3B: `{NOMBRE_SUBMODULO}` → `MetodoPago`
 
 ---
 
@@ -612,9 +558,10 @@ Usar PROMPT 3A reemplazando:
 
 - **⚠️ CRÍTICO**: Los submódulos NO tienen su propio modelo separado
 - **✅ CORRECTO**: Los submódulos son métodos adicionales en el modelo del módulo principal
-- **🔄 FLUJO ACTUALIZADO**: Crear submódulos primero (usando PROMPT 1B) → Completar modelo principal → Crear controlador principal → Agregar métodos de submódulo → Integrar todas las vistas
+- **🔄 FLUJO AUTOMATIZADO**: Solo proporcionar nombre del submódulo → IA analiza base de datos → Crea estructura completa
 - **📋 PRIORIDAD**: Desarrollar submódulos simples ANTES que los módulos principales completos
-- **🏗️ CONSTRUCCIÓN**: Usar PROMPT 1B para submódulos (crea el modelo principal si no existe)
+- **🏗️ CONSTRUCCIÓN**: PROMPT 1B analiza y crea el modelo principal si no existe
+- **🤖 INTELIGENCIA**: La IA determina automáticamente módulo padre, campos, relaciones y validaciones
 
 ### **Validación de Estructura**
 
