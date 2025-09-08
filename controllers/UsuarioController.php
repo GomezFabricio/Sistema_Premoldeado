@@ -6,14 +6,13 @@
 
 require_once __DIR__ . '/BaseController.php';
 require_once __DIR__ . '/../models/Usuario.php';
+require_once __DIR__ . '/../config/modules.php';
 
 class UsuarioController extends BaseController {
     
     public function listar() {
-        // Verificar acceso al módulo de usuarios (módulo ID 1)
-        if (!$this->auth->verificarAccesoModulo(1)) {
-            $this->redirect('../dashboard.php', 'No tienes permisos para acceder a este módulo', 'error');
-        }
+        // Verificar acceso al módulo de usuarios
+        $this->verificarAccesoModulo(ModuleConfig::USUARIOS);
         
         // Datos para la vista
         $datos = [
@@ -27,10 +26,8 @@ class UsuarioController extends BaseController {
     }
     
     public function crear() {
-        // Verificar acceso
-        if (!$this->auth->verificarAccesoModulo(1)) {
-            $this->redirect('../dashboard.php', 'No tienes permisos para acceder a este módulo', 'error');
-        }
+        // Verificar acceso al módulo de usuarios
+        $this->verificarAccesoModulo(ModuleConfig::USUARIOS);
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Procesar creación
@@ -100,9 +97,9 @@ class UsuarioController extends BaseController {
         require_once __DIR__ . '/NavigationController.php';
         
         try {
-            // Verificar acceso al módulo de usuarios (módulo ID 1)
+            // Verificar acceso al módulo de usuarios
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(1)) {
+            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
                 NavigationController::redirect(
                     NavigationController::getDashboardUrl(),
                     'No tienes permisos para acceder a este módulo',
@@ -141,9 +138,9 @@ class UsuarioController extends BaseController {
         require_once __DIR__ . '/NavigationController.php';
         
         try {
-            // Verificar acceso al módulo de usuarios (módulo ID 1)
+            // Verificar acceso al módulo de usuarios
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(1)) {
+            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
                 NavigationController::redirect(
                     NavigationController::getDashboardUrl(),
                     'No tienes permisos para acceder a este módulo',
@@ -189,7 +186,7 @@ class UsuarioController extends BaseController {
             
             // Verificar acceso al módulo de usuarios (módulo ID 1)
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(1)) {
+            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
                 echo json_encode(['success' => false, 'message' => 'No tienes permisos para realizar esta acción']);
                 exit;
             }
@@ -270,9 +267,9 @@ class UsuarioController extends BaseController {
         require_once __DIR__ . '/NavigationController.php';
         
         try {
-            // Verificar acceso al módulo de usuarios (módulo ID 1)
+            // Verificar acceso al módulo de usuarios
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(1)) {
+            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
                 NavigationController::redirect(
                     NavigationController::getDashboardUrl(),
                     'No tienes permisos para acceder a este módulo',
@@ -340,7 +337,7 @@ class UsuarioController extends BaseController {
             
             // Verificar acceso al módulo de usuarios (módulo ID 1)
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(1)) {
+            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
                 echo json_encode(['success' => false, 'message' => 'No tienes permisos para realizar esta acción']);
                 exit;
             }
@@ -435,7 +432,7 @@ class UsuarioController extends BaseController {
             
             // Verificar acceso al módulo de usuarios (módulo ID 1)
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(1)) {
+            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
                 echo json_encode(['success' => false, 'message' => 'No tienes permisos para realizar esta acción']);
                 exit;
             }
@@ -471,7 +468,7 @@ class UsuarioController extends BaseController {
         try {
             // Verificar acceso al módulo de usuarios (módulo ID 1)
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(1)) {
+            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
                 echo json_encode(['success' => false, 'message' => 'No tienes permisos para realizar esta acción']);
                 exit;
             }

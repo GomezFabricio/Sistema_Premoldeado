@@ -21,6 +21,27 @@ class BaseController {
     }
     
     /**
+     * Verificar acceso a un módulo específico
+     * 
+     * @param int $moduloId ID del módulo
+     * @param bool $redirectOnFail Si debe redireccionar en caso de fallo
+     * @return bool
+     */
+    protected function verificarAccesoModulo($moduloId, $redirectOnFail = true) {
+        $tieneAcceso = $this->auth->verificarAccesoModulo($moduloId);
+        
+        if (!$tieneAcceso && $redirectOnFail) {
+            $this->redirect(
+                '../dashboard.php', 
+                'No tienes permisos para acceder a este módulo', 
+                'error'
+            );
+        }
+        
+        return $tieneAcceso;
+    }
+    
+    /**
      * Verificar acceso (override en controladores que no requieren auth)
      */
     protected function verificarAcceso() {
