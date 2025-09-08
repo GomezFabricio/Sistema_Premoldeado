@@ -1,6 +1,6 @@
 <?php
 /**
- * Componente de menú dinámico responsivo
+ * Componente de menú simple usando Bootstrap
  * Renderiza el menú basado en los permisos del usuario
  */
 
@@ -11,70 +11,111 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['modulos'])) {
 
 // Obtener módulos del usuario desde la sesión
 $menuModulos = $_SESSION['modulos'];
-
-// DEBUG: Mostrar qué URLs se están generando (remover después)
-if (isset($_GET['debug'])) {
-    echo "<pre>";
-    print_r($menuModulos);
-    echo "</pre>";
-}
 ?>
 
-<!-- Cabecera del menú móvil -->
-<div class="nav-menu-header d-md-none">
-    <div class="d-flex justify-content-between align-items-center">
-        <div class="menu-title">
-            <i class="fas fa-bars me-2"></i>
-            <span>Menú de Navegación</span>
+<!-- Menú Simple con Bootstrap -->
+<ul class="nav d-none d-lg-flex" id="desktopMenu">
+    <?php foreach ($menuModulos as $index => $modulo): ?>
+        <?php if (!empty($modulo['submodulos']) && is_array($modulo['submodulos'])): ?>
+            <!-- Módulo con submódulos -->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle text-white px-3" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-module-index="<?php echo $index; ?>">
+                    <i class="<?php echo htmlspecialchars(isset($modulo['icono']) ? $modulo['icono'] : 'fas fa-circle'); ?> me-1"></i>
+                    <?php echo htmlspecialchars(isset($modulo['nombre']) ? $modulo['nombre'] : 'Sin nombre'); ?>
+                </a>
+                <ul class="dropdown-menu">
+                    <?php foreach ($modulo['submodulos'] as $submodulo): ?>
+                        <li>
+                            <a class="dropdown-item" href="<?php echo htmlspecialchars(isset($submodulo['url']) ? $submodulo['url'] : '#'); ?>">
+                                <?php echo htmlspecialchars(isset($submodulo['nombre']) ? $submodulo['nombre'] : 'Sin nombre'); ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </li>
+        <?php else: ?>
+            <!-- Módulo sin submódulos -->
+            <li class="nav-item">
+                <a class="nav-link text-white px-3" href="<?php echo htmlspecialchars(isset($modulo['url']) ? $modulo['url'] : '#'); ?>">
+                    <i class="<?php echo htmlspecialchars(isset($modulo['icono']) ? $modulo['icono'] : 'fas fa-circle'); ?> me-1"></i>
+                    <?php echo htmlspecialchars(isset($modulo['nombre']) ? $modulo['nombre'] : 'Sin nombre'); ?>
+                </a>
+            </li>
+        <?php endif; ?>
+    <?php endforeach; ?>
+</ul>
+
+<!-- Menú Móvil/Tablet con Acordeón -->
+<div class="d-lg-none">
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="mobileMenu" aria-labelledby="mobileMenuLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="mobileMenuLabel">
+                <i class="fas fa-bars me-2"></i>
+                Menú
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
-        <button class="nav-close-btn" type="button" id="navClose">
-            <i class="fas fa-times"></i>
-        </button>
+        <div class="offcanvas-body">
+            <div class="accordion accordion-flush" id="mobileMenuAccordion">
+                <?php foreach ($menuModulos as $index => $modulo): ?>
+                    <?php if (!empty($modulo['submodulos']) && is_array($modulo['submodulos'])): ?>
+                        <!-- Módulo con submódulos - Acordeón -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading<?php echo $index; ?>">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?php echo $index; ?>" aria-expanded="false" aria-controls="collapse<?php echo $index; ?>">
+                                    <i class="<?php echo htmlspecialchars(isset($modulo['icono']) ? $modulo['icono'] : 'fas fa-circle'); ?> me-2"></i>
+                                    <?php echo htmlspecialchars(isset($modulo['nombre']) ? $modulo['nombre'] : 'Sin nombre'); ?>
+                                </button>
+                            </h2>
+                            <div id="collapse<?php echo $index; ?>" class="accordion-collapse collapse" aria-labelledby="heading<?php echo $index; ?>" data-bs-parent="#mobileMenuAccordion">
+                                <div class="accordion-body p-0">
+                                    <div class="list-group list-group-flush">
+                                        <?php foreach ($modulo['submodulos'] as $submodulo): ?>
+                                            <a href="<?php echo htmlspecialchars(isset($submodulo['url']) ? $submodulo['url'] : '#'); ?>" 
+                                               class="list-group-item list-group-item-action border-0 ps-4">
+                                                <i class="fas fa-angle-right me-2 text-muted"></i>
+                                                <?php echo htmlspecialchars(isset($submodulo['nombre']) ? $submodulo['nombre'] : 'Sin nombre'); ?>
+                                            </a>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <!-- Módulo sin submódulos - Enlace directo -->
+                        <div class="accordion-item">
+                            <div class="accordion-header">
+                                <a href="<?php echo htmlspecialchars(isset($modulo['url']) ? $modulo['url'] : '#'); ?>" 
+                                   class="accordion-button text-decoration-none collapsed" style="pointer-events: auto;">
+                                    <i class="<?php echo htmlspecialchars(isset($modulo['icono']) ? $modulo['icono'] : 'fas fa-circle'); ?> me-2"></i>
+                                    <?php echo htmlspecialchars(isset($modulo['nombre']) ? $modulo['nombre'] : 'Sin nombre'); ?>
+                                </a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Menú Principal Responsivo -->
-<div class="nav-menu-container">
-    <!-- Cabecera del menú móvil -->
-    <div class="nav-menu-header d-md-none">
-        <div class="d-flex justify-content-between align-items-center">
-            <h5 class="menu-title mb-0">
-                <i class="fas fa-bars me-2"></i>
-                Navegación
-            </h5>
-            <button type="button" class="nav-close-btn" id="navClose" aria-label="Cerrar menú">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    </div>
-    
-    <!-- Items del menú -->
-    <?php foreach ($menuModulos as $modulo): ?>
-        <div class="nav-item">
-            <?php if (!empty($modulo['submodulos']) && is_array($modulo['submodulos'])): ?>
-                <!-- Módulo con submódulos -->
-                <div class="nav-dropdown">
-                    <button class="nav-link dropdown-toggle" data-module-id="<?php echo $modulo['id']; ?>">
-                        <i class="<?php echo htmlspecialchars(isset($modulo['icono']) ? $modulo['icono'] : 'fas fa-circle'); ?>"></i>
-                        <span class="nav-text"><?php echo htmlspecialchars(isset($modulo['nombre']) ? $modulo['nombre'] : 'Sin nombre'); ?></span>
-                        <i class="fas fa-chevron-down nav-arrow"></i>
-                    </button>
-                    <div class="nav-submenu">
-                        <?php foreach ($modulo['submodulos'] as $submodulo): ?>
-                            <a href="<?php echo htmlspecialchars(isset($submodulo['url']) ? $submodulo['url'] : '#'); ?>" class="nav-sublink">
-                                <i class="fas fa-angle-right"></i>
-                                <span><?php echo htmlspecialchars(isset($submodulo['nombre']) ? $submodulo['nombre'] : 'Sin nombre'); ?></span>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            <?php else: ?>
-                <!-- Módulo sin submódulos -->
-                <a href="<?php echo htmlspecialchars(isset($modulo['url']) ? $modulo['url'] : '#'); ?>" class="nav-link">
-                    <i class="<?php echo htmlspecialchars(isset($modulo['icono']) ? $modulo['icono'] : 'fas fa-circle'); ?>"></i>
-                    <span class="nav-text"><?php echo htmlspecialchars(isset($modulo['nombre']) ? $modulo['nombre'] : 'Sin nombre'); ?></span>
-                </a>
-            <?php endif; ?>
-        </div>
-    <?php endforeach; ?>
-</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar otros dropdowns cuando se abre uno nuevo (Desktop)
+    const desktopMenu = document.getElementById('desktopMenu');
+    if (desktopMenu) {
+        desktopMenu.addEventListener('show.bs.dropdown', function(e) {
+            // Cerrar todos los otros dropdowns abiertos
+            const openDropdowns = desktopMenu.querySelectorAll('.dropdown-menu.show');
+            openDropdowns.forEach(dropdown => {
+                if (dropdown !== e.target.nextElementSibling) {
+                    const toggleButton = dropdown.previousElementSibling;
+                    if (toggleButton) {
+                        bootstrap.Dropdown.getInstance(toggleButton)?.hide();
+                    }
+                }
+            });
+        });
+    }
+});
+</script>
