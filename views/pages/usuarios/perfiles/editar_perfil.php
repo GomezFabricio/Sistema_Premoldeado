@@ -4,76 +4,25 @@
  * Submódulo del módulo Usuarios
  */
 
-// Iniciar sesión si no está iniciada
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Esta vista recibe las siguientes variables del controlador:
+// $perfil - Datos del perfil a editar
+// $modulos - Lista de todos los módulos disponibles  
+// $modulosAsignadosIds - IDs de los módulos ya asignados al perfil
+// $pageTitle - Título de la página
+// $usuario - Usuario logueado
 
-// Validar que se haya proporcionado un ID
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    header('Location: listado_perfiles.php');
-    exit;
-}
+?>
 
-// Cargar dependencias
-require_once __DIR__ . '/../../../../controllers/AuthController.php';
-require_once __DIR__ . '/../../../../models/Usuario.php';
-
-try {
-    // Verificar acceso al módulo de usuarios (módulo ID 1)
-    $auth = new AuthController();
-    if (!$auth->verificarAccesoModulo(1)) {
-        header('Location: http://localhost/Sistema_Premoldeado/views/pages/dashboard.php');
-        $_SESSION['flash_message'] = [
-            'message' => 'No tienes permisos para acceder a este módulo',
-            'type' => 'error'
-        ];
-        exit;
-    }
-    
-    $id = $_GET['id'];
-    
-    // Validar ID
-    if (!is_numeric($id) || $id <= 0) {
-        header('Location: listado_perfiles.php');
-        $_SESSION['flash_message'] = [
-            'message' => 'ID de perfil inválido',
-            'type' => 'error'
-        ];
-        exit;
-    }
-    
-    // Obtener datos del perfil
-    $perfil = Usuario::obtenerPerfilPorId($id);
-    if (!$perfil) {
-        header('Location: listado_perfiles.php');
-        $_SESSION['flash_message'] = [
-            'message' => 'Perfil no encontrado',
-            'type' => 'error'
-        ];
-        exit;
-    }
-    
-    // Obtener módulos disponibles y asignados
-    $modulos = Usuario::obtenerTodosModulos();
-    $modulosAsignados = Usuario::obtenerModulosAsignadosPorPerfil($id);
-    $modulosAsignadosIds = array_column($modulosAsignados, 'id');
-    
-    // Preparar datos para la vista
-    $pageTitle = 'Editar Perfil';
-    $usuario = $auth->getUsuarioLogueado();
-    ?>
-    
-    <!-- Contenido de Editar Perfil -->
-    <div class="row">
-        <div class="col-12">
-            <!-- Título de la página -->
+<!-- Contenido de Editar Perfil -->
+<div class="row">
+    <div class="col-12">
+        <!-- Título de la página -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0">
                     <i class="fas fa-edit me-2"></i>
                     Editar Perfil: <?= htmlspecialchars($perfil['nombre']) ?>
                 </h1>
-                <a href="listado_perfiles.php" class="btn btn-secondary">
+                <a href="/Sistema_Premoldeado/controllers/UsuarioController.php?action=indexPerfiles" class="btn btn-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Volver al Listado
                 </a>
             </div>
@@ -81,7 +30,7 @@ try {
             <!-- Formulario de Editar Perfil -->
             <div class="card">
                 <div class="card-body">
-                    <form action="../../../../controllers/UsuarioController.php?action=updatePerfiles" method="POST" id="formEditarPerfil">
+                    <form action="/Sistema_Premoldeado/controllers/UsuarioController.php?action=updatePerfiles" method="POST" id="formEditarPerfil">
                         <input type="hidden" name="id" value="<?= htmlspecialchars($perfil['id']) ?>">
                         
                         <div class="row">
@@ -132,7 +81,7 @@ try {
                         </div>
                         
                         <div class="d-flex justify-content-end gap-2">
-                            <a href="listado_perfiles.php" class="btn btn-secondary">
+                            <a href="/Sistema_Premoldeado/controllers/UsuarioController.php?action=indexPerfiles" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>Cancelar
                             </a>
                             <button type="submit" class="btn btn-primary">
@@ -155,16 +104,3 @@ try {
         }
     });
     </script>
-    
-    <?php
-    
-} catch (Exception $e) {
-    error_log("Error en editar perfil: " . $e->getMessage());
-    header('Location: listado_perfiles.php');
-    $_SESSION['flash_message'] = [
-        'message' => 'Error interno del servidor',
-        'type' => 'error'
-    ];
-    exit;
-}
-?>
