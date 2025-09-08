@@ -4,20 +4,62 @@
  * Página de inicio después del login
  */
 
-require_once __DIR__ . '/../../controllers/BaseController.php';
+require_once __DIR__ . '/../../controllers/AuthController.php';
 
-class DashboardController extends BaseController {
-    public function index() {
-        // Datos para el dashboard
-        $pageTitle = 'Dashboard';
-        $pageIcon = 'fas fa-tachometer-alt';
-        $breadcrumb = [['title' => 'Dashboard']];
-        $statsCards = $this->obtenerEstadisticas();
-        $usuario = $this->usuario;
-        
-        // Incluir header
-        include __DIR__ . '/../layouts/header.php';
-        ?>
+// Crear una instancia del AuthController para verificar autenticación
+$auth = new AuthController();
+
+// Verificar autenticación
+if (!$auth->verificarAutenticacion()) {
+    header('Location: ../auth/login.php');
+    exit;
+}
+
+// Datos para el dashboard
+$pageTitle = 'Dashboard';
+$pageIcon = 'fas fa-tachometer-alt';
+$breadcrumb = [['title' => 'Dashboard']];
+$usuario = $auth->getUsuarioLogueado();
+
+// Función para obtener estadísticas
+function obtenerEstadisticas() {
+    return [
+        [
+            'title' => 'Usuarios',
+            'value' => '25',
+            'icon' => 'fas fa-users',
+            'color' => 'primary',
+            'url' => 'usuarios/listado_usuarios.php'
+        ],
+        [
+            'title' => 'Clientes',
+            'value' => '150',
+            'icon' => 'fas fa-user-tie',
+            'color' => 'success',
+            'url' => 'clientes/listado_clientes.php'
+        ],
+        [
+            'title' => 'Productos',
+            'value' => '89',
+            'icon' => 'fas fa-boxes',
+            'color' => 'info',
+            'url' => 'productos/listado_productos.php'
+        ],
+        [
+            'title' => 'Pedidos',
+            'value' => '42',
+            'icon' => 'fas fa-shopping-cart',
+            'color' => 'warning',
+            'url' => 'pedidos/listado_pedidos.php'
+        ]
+    ];
+}
+
+$statsCards = obtenerEstadisticas();
+
+// Incluir header
+include __DIR__ . '/../layouts/header.php';
+?>
         
         <!-- Contenido del Dashboard -->
         <div class="row">
@@ -169,47 +211,7 @@ class DashboardController extends BaseController {
             </div>
         </div>
 
-        <?php
-        // Incluir footer
-        include __DIR__ . '/../layouts/footer.php';
-    }
-    
-    private function obtenerEstadisticas() {
-        // TODO: Implementar consultas reales a la base de datos
-        return [
-            [
-                'title' => 'Usuarios',
-                'value' => '25',
-                'icon' => 'fas fa-users',
-                'color' => 'primary',
-                'url' => 'usuarios/listado_usuarios.php'
-            ],
-            [
-                'title' => 'Clientes',
-                'value' => '150',
-                'icon' => 'fas fa-user-tie',
-                'color' => 'success',
-                'url' => 'clientes/listado_clientes.php'
-            ],
-            [
-                'title' => 'Productos',
-                'value' => '89',
-                'icon' => 'fas fa-boxes',
-                'color' => 'info',
-                'url' => 'productos/listado_productos.php'
-            ],
-            [
-                'title' => 'Pedidos',
-                'value' => '42',
-                'icon' => 'fas fa-shopping-cart',
-                'color' => 'warning',
-                'url' => 'pedidos/listado_pedidos.php'
-            ]
-        ];
-    }
-}
-
-// Instanciar y ejecutar
-$dashboardController = new DashboardController();
-$dashboardController->index();
+<?php
+// Incluir footer
+include __DIR__ . '/../layouts/footer.php';
 ?>

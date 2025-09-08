@@ -83,10 +83,13 @@ class AuthController {
         $_SESSION['perfil_nombre'] = $usuario['perfil_nombre'];
         $_SESSION['login_time'] = time();
         
-        // Obtener módulos del perfil
+        // Obtener módulos del perfil y prepararlos para el menú
         try {
             $modulos = $this->usuarioModel->obtenerModulosPorPerfil($usuario['perfiles_id']);
-            $_SESSION['modulos'] = $modulos;
+            
+            // NavigationController se encarga de asignar URLs y configuración
+            require_once __DIR__ . '/NavigationController.php';
+            $_SESSION['modulos'] = NavigationController::prepararModulosParaMenu($modulos);
         } catch (Exception $e) {
             error_log("Error obteniendo módulos: " . $e->getMessage());
             $_SESSION['modulos'] = [];

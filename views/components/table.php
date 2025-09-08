@@ -100,8 +100,16 @@ $defaultConfig = [
     'container_class' => 'table-responsive'
 ];
 
-// Merge configuración
-$config = array_merge_recursive($defaultConfig, $config);
+// Merge configuración - usar array_merge para evitar problemas con valores escalares
+$config = array_merge($defaultConfig, $config);
+
+// Merge específico para arrays anidados que sí necesitan merge recursivo
+if (isset($config['datatables']) && isset($defaultConfig['datatables'])) {
+    $config['datatables'] = array_merge($defaultConfig['datatables'], $config['datatables']);
+}
+if (isset($config['empty']) && isset($defaultConfig['empty'])) {
+    $config['empty'] = array_merge($defaultConfig['empty'], $config['empty']);
+}
 
 // Auto-detectar columnas si no están definidas
 if (empty($config['columns']) && !empty($data)) {
@@ -122,6 +130,16 @@ function formatCellValue($value, $type, $formatter = null, $row = []) {
     // Si hay un formatter personalizado, usarlo
     if ($formatter && is_callable($formatter)) {
         return $formatter($value, $row);
+    }
+    
+    // Verificar que el valor no sea un array antes de procesar
+    if (is_array($value)) {
+        $value = json_encode($value); // Convertir array a string JSON
+    }
+    
+    // Manejar valores nulos
+    if ($value === null || $value === '') {
+        $value = '';
     }
     
     // Formateo según tipo
@@ -149,7 +167,7 @@ function formatCellValue($value, $type, $formatter = null, $row = []) {
             
         case 'text':
         default:
-            return htmlspecialchars($value);
+            return htmlspecialchars((string)$value);
     }
 }
 
@@ -190,15 +208,6 @@ $hasActions = !empty($config['actions']) && (
 <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 
 <div class="card">
-    <div class="card-header">
-        <h5 class="card-title mb-0">
-            <i class="<?php echo $config['empty']['icon']; ?> me-2"></i>
-            <?php echo htmlspecialchars($config['title']); ?>
-            <?php if (!empty($data)): ?>
-                <span class="badge bg-secondary ms-2"><?php echo count($data); ?> registros</span>
-            <?php endif; ?>
-        </h5>
-    </div>
     <div class="card-body p-0">
         <?php if (empty($data)): ?>
             <!-- Estado vacío -->

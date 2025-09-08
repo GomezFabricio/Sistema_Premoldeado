@@ -24,131 +24,378 @@ class Usuario {
         return false;
     }
     
+    /**
+     * Método de instancia para obtener módulos por perfil - SOLO DATOS
+     * El controlador se encarga de agregar URLs y configuración
+     * 
+     * @param int $perfil_id ID del perfil
+     * @return array Array de módulos básicos del perfil
+     */
     public function obtenerModulosPorPerfil($perfil_id) {
-        $sql = "SELECT m.id, m.nombre 
-                FROM modulos m 
-                INNER JOIN perfiles_modulos pm ON m.id = pm.modulos_id 
-                WHERE pm.perfiles_id = ? 
-                ORDER BY m.id";
-        
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([$perfil_id]);
-        $modulos = $stmt->fetchAll();
-        
-        // Mapear módulos a estructura del menú con iconos y URLs
-        $menuModulos = [];
-        $configuracionModulos = $this->getConfiguracionModulos();
-        
-        foreach ($modulos as $modulo) {
-            if (isset($configuracionModulos[$modulo['id']])) {
-                $config = $configuracionModulos[$modulo['id']];
-                $menuModulos[] = [
-                    'id' => $modulo['id'],
-                    'nombre' => $modulo['nombre'],
-                    'icono' => $config['icono'],
-                    'url' => $config['url'],
-                    'submodulos' => $config['submodulos']
-                ];
+        // Solo devolver los módulos básicos de la base de datos
+        return self::obtenerModulosAsignadosPorPerfil($perfil_id);
+    }
+
+    // ============================================================================
+    // SUBMÓDULO PERFILES - Gestión de perfiles de usuario
+    // ============================================================================
+    
+    /**
+     * Obtiene todos los perfiles activos
+     * 
+     * @return array Array de perfiles activos
+     */
+    public static function obtenerTodosPerfiles() {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $sql = "SELECT 
+                        p.id, 
+                        p.nombre,
+                        COUNT(DISTINCT pm.modulos_id) as total_modulos,
+                        COUNT(DISTINCT u.id) as total_usuarios
+                    FROM perfiles p
+                    LEFT JOIN perfiles_modulos pm ON p.id = pm.perfiles_id
+                    LEFT JOIN usuarios u ON p.id = u.perfiles_id
+                    GROUP BY p.id, p.nombre
+                    ORDER BY p.nombre ASC";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute();
+            
+            $perfiles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Agregar campos faltantes con valores por defecto
+            foreach ($perfiles as &$perfil) {
+                $perfil['descripcion'] = 'Perfil de ' . $perfil['nombre'];
+                $perfil['activo'] = 1; // Todos activos por defecto
+                $perfil['fecha_creacion'] = '2024-01-01'; // Fecha por defecto
             }
+            
+            return $perfiles;
+        } catch (PDOException $e) {
+            error_log("Error al obtener perfiles: " . $e->getMessage());
+            return [];
         }
-        
-        return $menuModulos;
     }
     
-    private function getConfiguracionModulos() {
-        // Configuración de módulos con iconos, URLs y submódulos
-        return [
-            1 => [ // Usuarios
-                'icono' => 'fas fa-users',
-                'url' => '../usuarios/listado_usuarios.php',
-                'submodulos' => [
-                    ['nombre' => 'Listado de Usuarios', 'url' => '../usuarios/listado_usuarios.php'],
-                    ['nombre' => 'Crear Usuario', 'url' => '../usuarios/crear_usuario.php'],
-                    ['nombre' => 'Perfiles', 'url' => '../usuarios/perfiles/listado_perfiles.php']
-                ]
-            ],
-            2 => [ // Clientes
-                'icono' => 'fas fa-user-friends',
-                'url' => '../clientes/listado_clientes.php',
-                'submodulos' => [
-                    ['nombre' => 'Listado de Clientes', 'url' => '../clientes/listado_clientes.php'],
-                    ['nombre' => 'Crear Cliente', 'url' => '../clientes/crear_cliente.php']
-                ]
-            ],
-            3 => [ // Productos
-                'icono' => 'fas fa-boxes',
-                'url' => '../productos/listado_productos.php',
-                'submodulos' => [
-                    ['nombre' => 'Listado de Productos', 'url' => '../productos/listado_productos.php'],
-                    ['nombre' => 'Crear Producto', 'url' => '../productos/crear_producto.php'],
-                    ['nombre' => 'Tipos de Producto', 'url' => '../productos/tipos/listado_tipos_producto.php']
-                ]
-            ],
-            4 => [ // Materiales
-                'icono' => 'fas fa-industry',
-                'url' => '../materiales/listado_materiales.php',
-                'submodulos' => [
-                    ['nombre' => 'Listado de Materiales', 'url' => '../materiales/listado_materiales.php'],
-                    ['nombre' => 'Crear Material', 'url' => '../materiales/crear_material.php']
-                ]
-            ],
-            5 => [ // Pedidos y reservas
-                'icono' => 'fas fa-shopping-cart',
-                'url' => '../pedidos/listado_pedidos.php',
-                'submodulos' => [
-                    ['nombre' => 'Listado de Pedidos', 'url' => '../pedidos/listado_pedidos.php'],
-                    ['nombre' => 'Crear Pedido', 'url' => '../pedidos/crear_pedido.php'],
-                    ['nombre' => 'Reservas', 'url' => '../pedidos/reservas/listado_reservas.php'],
-                    ['nombre' => 'Devoluciones', 'url' => '../pedidos/devoluciones/listado_devoluciones.php'],
-                    ['nombre' => 'Estados de Pedido', 'url' => '../pedidos/estados/listado_estados_pedido.php'],
-                    ['nombre' => 'Formas de Entrega', 'url' => '../pedidos/formas_entrega/listado_formas_entrega.php'],
-                    ['nombre' => 'Estados de Reserva', 'url' => '../pedidos/reservas/estados/listado_estados_reserva.php']
-                ]
-            ],
-            6 => [ // Producción
-                'icono' => 'fas fa-cogs',
-                'url' => '../produccion/listado_produccion.php',
-                'submodulos' => [
-                    ['nombre' => 'Listado de Producción', 'url' => '../produccion/listado_produccion.php'],
-                    ['nombre' => 'Crear Producción', 'url' => '../produccion/crear_produccion.php'],
-                    ['nombre' => 'Estados de Producción', 'url' => '../produccion/estados/listado_estados_produccion.php']
-                ]
-            ],
-            7 => [ // Proveedores
-                'icono' => 'fas fa-truck',
-                'url' => '../proveedores/listado_proveedores.php',
-                'submodulos' => [
-                    ['nombre' => 'Listado de Proveedores', 'url' => '../proveedores/listado_proveedores.php'],
-                    ['nombre' => 'Crear Proveedor', 'url' => '../proveedores/crear_proveedor.php']
-                ]
-            ],
-            8 => [ // Compras
-                'icono' => 'fas fa-shopping-bag',
-                'url' => '../compras/listado_compras.php',
-                'submodulos' => [
-                    ['nombre' => 'Listado de Compras', 'url' => '../compras/listado_compras.php']
-                ]
-            ],
-            9 => [ // Ventas
-                'icono' => 'fas fa-receipt',
-                'url' => '../ventas/listado_ventas.php',
-                'submodulos' => [
-                    ['nombre' => 'Listado de Ventas', 'url' => '../ventas/listado_ventas.php'],
-                    ['nombre' => 'Crear Venta', 'url' => '../ventas/crear_venta.php'],
-                    ['nombre' => 'Métodos de Pago', 'url' => '../ventas/metodos_pago/listado_metodos_pago.php']
-                ]
-            ],
-            10 => [ // Modulos
-                'icono' => 'fas fa-th-large',
-                'url' => '#',
-                'submodulos' => []
-            ],
-            20 => [ // Parámetros
-                'icono' => 'fas fa-cog',
-                'url' => '#',
-                'submodulos' => []
-            ]
-        ];
+    /**
+     * Obtiene un perfil específico por su ID
+     * 
+     * @param int $id ID del perfil
+     * @return array|false Datos del perfil o false si no existe
+     */
+    public static function obtenerPerfilPorId($id) {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $sql = "SELECT id, nombre FROM perfiles WHERE id = ?";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$id]);
+            
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error al obtener perfil por ID: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Crea un nuevo perfil
+     * 
+     * @param array $datos Array con los datos del perfil ['nombre' => 'valor']
+     * @return array Resultado de la operación
+     */
+    public static function crearPerfil($datos) {
+        try {
+            // Validar datos obligatorios
+            if (empty($datos['nombre'])) {
+                return [
+                    'success' => false,
+                    'message' => 'El nombre del perfil es obligatorio'
+                ];
+            }
+            
+            // Sanitizar datos
+            $nombre = trim($datos['nombre']);
+            
+            // Validar longitud del nombre
+            if (strlen($nombre) > 45) {
+                return [
+                    'success' => false,
+                    'message' => 'El nombre del perfil no puede exceder 45 caracteres'
+                ];
+            }
+            
+            $db = Database::getInstance()->getConnection();
+            
+            // Verificar que no exista un perfil con el mismo nombre
+            $sqlVerificar = "SELECT id FROM perfiles WHERE nombre = ?";
+            $stmtVerificar = $db->prepare($sqlVerificar);
+            $stmtVerificar->execute([$nombre]);
+            
+            if ($stmtVerificar->fetch()) {
+                return [
+                    'success' => false,
+                    'message' => 'Ya existe un perfil con este nombre'
+                ];
+            }
+            
+            // Insertar nuevo perfil
+            $sql = "INSERT INTO perfiles (nombre) VALUES (?)";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$nombre]);
+            
+            $perfilId = $db->lastInsertId();
+            
+            return [
+                'success' => true,
+                'message' => 'Perfil creado exitosamente',
+                'id' => $perfilId
+            ];
+            
+        } catch (PDOException $e) {
+            error_log("Error al crear perfil: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Error interno del servidor'
+            ];
+        }
+    }
+    
+    /**
+     * Actualiza un perfil existente
+     * 
+     * @param int $id ID del perfil a actualizar
+     * @param array $datos Array con los datos a actualizar
+     * @return array Resultado de la operación
+     */
+    public static function actualizarPerfil($id, $datos) {
+        try {
+            // Validar que el perfil existe
+            if (!self::obtenerPerfilPorId($id)) {
+                return [
+                    'success' => false,
+                    'message' => 'El perfil especificado no existe'
+                ];
+            }
+            
+            // Validar datos obligatorios
+            if (empty($datos['nombre'])) {
+                return [
+                    'success' => false,
+                    'message' => 'El nombre del perfil es obligatorio'
+                ];
+            }
+            
+            // Sanitizar datos
+            $nombre = trim($datos['nombre']);
+            
+            // Validar longitud del nombre
+            if (strlen($nombre) > 45) {
+                return [
+                    'success' => false,
+                    'message' => 'El nombre del perfil no puede exceder 45 caracteres'
+                ];
+            }
+            
+            $db = Database::getInstance()->getConnection();
+            
+            // Verificar que no exista otro perfil con el mismo nombre
+            $sqlVerificar = "SELECT id FROM perfiles WHERE nombre = ? AND id != ?";
+            $stmtVerificar = $db->prepare($sqlVerificar);
+            $stmtVerificar->execute([$nombre, $id]);
+            
+            if ($stmtVerificar->fetch()) {
+                return [
+                    'success' => false,
+                    'message' => 'Ya existe otro perfil con este nombre'
+                ];
+            }
+            
+            // Actualizar perfil
+            $sql = "UPDATE perfiles SET nombre = ? WHERE id = ?";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$nombre, $id]);
+            
+            return [
+                'success' => true,
+                'message' => 'Perfil actualizado exitosamente'
+            ];
+            
+        } catch (PDOException $e) {
+            error_log("Error al actualizar perfil: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Error interno del servidor'
+            ];
+        }
+    }
+    
+    /**
+     * Elimina un perfil (eliminación física debido a que la tabla no tiene campo 'activo')
+     * NOTA: Solo se permite eliminar si no hay usuarios asociados al perfil
+     * 
+     * @param int $id ID del perfil a eliminar
+     * @return array Resultado de la operación
+     */
+    public static function eliminarPerfil($id) {
+        try {
+            // Validar que el perfil existe
+            if (!self::obtenerPerfilPorId($id)) {
+                return [
+                    'success' => false,
+                    'message' => 'El perfil especificado no existe'
+                ];
+            }
+            
+            $db = Database::getInstance()->getConnection();
+            
+            // Verificar si hay usuarios asociados a este perfil
+            $sqlVerificar = "SELECT COUNT(*) as total FROM usuarios WHERE perfiles_id = ?";
+            $stmtVerificar = $db->prepare($sqlVerificar);
+            $stmtVerificar->execute([$id]);
+            $resultado = $stmtVerificar->fetch();
+            
+            if ($resultado['total'] > 0) {
+                return [
+                    'success' => false,
+                    'message' => 'No se puede eliminar el perfil porque tiene usuarios asociados'
+                ];
+            }
+            
+            // Verificar si hay módulos asociados a este perfil
+            $sqlVerificarModulos = "SELECT COUNT(*) as total FROM perfiles_modulos WHERE perfiles_id = ?";
+            $stmtVerificarModulos = $db->prepare($sqlVerificarModulos);
+            $stmtVerificarModulos->execute([$id]);
+            $resultadoModulos = $stmtVerificarModulos->fetch();
+            
+            if ($resultadoModulos['total'] > 0) {
+                // Eliminar primero las asociaciones con módulos
+                $sqlEliminarModulos = "DELETE FROM perfiles_modulos WHERE perfiles_id = ?";
+                $stmtEliminarModulos = $db->prepare($sqlEliminarModulos);
+                $stmtEliminarModulos->execute([$id]);
+            }
+            
+            // Eliminar perfil
+            $sql = "DELETE FROM perfiles WHERE id = ?";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$id]);
+            
+            return [
+                'success' => true,
+                'message' => 'Perfil eliminado exitosamente'
+            ];
+            
+        } catch (PDOException $e) {
+            error_log("Error al eliminar perfil: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Error interno del servidor'
+            ];
+        }
+    }
+    
+    /**
+     * Obtiene los módulos asignados a un perfil específico
+     * 
+     * @param int $perfilId ID del perfil
+     * @return array Array de módulos asignados al perfil
+     */
+    public static function obtenerModulosAsignadosPorPerfil($perfilId) {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $sql = "SELECT m.id, m.nombre 
+                    FROM modulos m 
+                    INNER JOIN perfiles_modulos pm ON m.id = pm.modulos_id 
+                    WHERE pm.perfiles_id = ? 
+                    ORDER BY m.nombre ASC";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$perfilId]);
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error al obtener módulos por perfil: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Obtiene todos los módulos disponibles para asignar a perfiles
+     * 
+     * @return array Array de todos los módulos disponibles
+     */
+    public static function obtenerTodosModulos() {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $sql = "SELECT id, nombre FROM modulos ORDER BY nombre ASC";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute();
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error al obtener módulos: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * Asigna módulos a un perfil específico
+     * 
+     * @param int $perfilId ID del perfil
+     * @param array $modulosIds Array de IDs de módulos a asignar
+     * @return array Resultado de la operación
+     */
+    public static function asignarModulosAPerfil($perfilId, $modulosIds) {
+        try {
+            // Validar que el perfil existe
+            if (!self::obtenerPerfilPorId($perfilId)) {
+                return [
+                    'success' => false,
+                    'message' => 'El perfil especificado no existe'
+                ];
+            }
+            
+            $db = Database::getInstance()->getConnection();
+            
+            // Iniciar transacción
+            $db->beginTransaction();
+            
+            // Eliminar asignaciones previas
+            $sqlEliminar = "DELETE FROM perfiles_modulos WHERE perfiles_id = ?";
+            $stmtEliminar = $db->prepare($sqlEliminar);
+            $stmtEliminar->execute([$perfilId]);
+            
+            // Asignar nuevos módulos si se proporcionaron
+            if (!empty($modulosIds) && is_array($modulosIds)) {
+                $sqlInsertar = "INSERT INTO perfiles_modulos (perfiles_id, modulos_id) VALUES (?, ?)";
+                $stmtInsertar = $db->prepare($sqlInsertar);
+                
+                foreach ($modulosIds as $moduloId) {
+                    $stmtInsertar->execute([$perfilId, $moduloId]);
+                }
+            }
+            
+            // Confirmar transacción
+            $db->commit();
+            
+            return [
+                'success' => true,
+                'message' => 'Módulos asignados exitosamente al perfil'
+            ];
+            
+        } catch (PDOException $e) {
+            // Revertir transacción en caso de error
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            error_log("Error al asignar módulos a perfil: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Error interno del servidor'
+            ];
+        }
     }
 }
 ?>
