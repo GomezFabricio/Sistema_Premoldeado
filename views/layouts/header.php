@@ -38,46 +38,86 @@ $perfil_nombre = $_SESSION['perfil_nombre'] ?? 'Sin perfil';
     <!-- Estilos personalizados -->
     <link href="/Sistema_Premoldeado/assets/css/style.css" rel="stylesheet">
     
+    <!-- JavaScript (carga al final del head para mejor rendimiento) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script src="/Sistema_Premoldeado/assets/js/app.js" defer></script>
+    
 </head>
 <body>
-    <!-- Navegación Superior -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="../dashboard.php">
-                <i class="fas fa-industry me-2"></i>Sistema Premoldeado
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <!-- Menú Principal Dinámico -->
-                <?php include __DIR__ . '/../components/menu.php'; ?>
-                
-                <!-- Usuario Logueado -->
-                <div class="navbar-nav">
-                    <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user me-2"></i><?= htmlspecialchars($usuario_nombre) ?>
-                            <span class="badge bg-secondary ms-2"><?= htmlspecialchars($perfil_nombre) ?></span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="../dashboard.php">
-                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="../pages/auth/logout.php">
-                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
-                            </a></li>
-                        </ul>
+    <!-- Header Principal -->
+    <header class="main-header">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <!-- Logo y Brand -->
+                    <div class="col-auto">
+                        <div class="brand-container">
+                            <a href="<?php 
+                                require_once __DIR__ . '/../../controllers/NavigationController.php';
+                                echo NavigationController::getDashboardUrl(); 
+                            ?>" class="brand-link">
+                                <i class="fas fa-industry"></i>
+                                <span class="brand-text">Sistema Premoldeado</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Navegación Principal -->
+                    <div class="col">
+                        <nav class="main-navigation">
+                            <!-- Toggle Button para móviles/tablets -->
+                            <button class="nav-toggle" type="button" id="navToggle" aria-label="Toggle navigation">
+                                <span class="nav-toggle-icon"></span>
+                                <span class="nav-toggle-icon"></span>
+                                <span class="nav-toggle-icon"></span>
+                            </button>
+                            
+                            <!-- Menú Principal -->
+                            <div class="nav-menu" id="navMenu">
+                                <?php include __DIR__ . '/../components/menu.php'; ?>
+                            </div>
+                        </nav>
+                    </div>
+                    
+                    <!-- Usuario Info -->
+                    <div class="col-auto">
+                        <div class="user-info">
+                            <div class="dropdown">
+                                <button class="user-dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user"></i>
+                                    <span class="user-name"><?= htmlspecialchars($usuario_nombre) ?></span>
+                                    <span class="user-role"><?= htmlspecialchars($perfil_nombre) ?></span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu" aria-labelledby="userDropdown">
+                                    <li>
+                                        <a class="dropdown-item" href="<?php echo NavigationController::getDashboardUrl(); ?>">
+                                            <i class="fas fa-tachometer-alt"></i>
+                                            <span>Dashboard</span>
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item logout-item" href="<?php 
+                                            require_once __DIR__ . '/../../controllers/NavigationController.php';
+                                            echo NavigationController::getLogoutUrl(); 
+                                        ?>">
+                                            <i class="fas fa-sign-out-alt"></i>
+                                            <span>Cerrar Sesión</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </nav>
+    </header>
     
     <!-- Contenido Principal -->
-    <div class="container-fluid main-content">
-        <div class="row">
-            <div class="col-12">
+    <main class="main-content">
+        <div class="container-fluid">
+            <div class="content-wrapper">
