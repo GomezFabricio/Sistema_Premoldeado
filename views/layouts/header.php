@@ -44,7 +44,7 @@ $perfil_nombre = $_SESSION['perfil_nombre'] ?? 'Sin perfil';
     <script src="/Sistema_Premoldeado/assets/js/app.js" defer></script>
     
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <!-- Header Principal -->
     <header class="main-header">
         <!-- Top Bar -->
@@ -66,12 +66,10 @@ $perfil_nombre = $_SESSION['perfil_nombre'] ?? 'Sin perfil';
                     
                     <!-- Navegación Principal -->
                     <div class="col">
-                        <nav class="main-navigation">
+                        <nav class="main-navigation d-flex justify-content-center">
                             <!-- Toggle Button para móviles/tablets -->
-                            <button class="nav-toggle" type="button" id="navToggle" aria-label="Toggle navigation">
-                                <span class="nav-toggle-icon"></span>
-                                <span class="nav-toggle-icon"></span>
-                                <span class="nav-toggle-icon"></span>
+                            <button class="btn btn-outline-light d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" aria-controls="mobileMenu">
+                                <i class="fas fa-bars"></i>
                             </button>
                             
                             <!-- Menú Principal -->
