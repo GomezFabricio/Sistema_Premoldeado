@@ -42,7 +42,7 @@ try {
                     <i class="fas fa-user-shield me-2"></i>
                     Gestión de Perfiles
                 </h1>
-                <a href="crear_perfil.php" class="btn btn-primary">
+                <a href="/Sistema_Premoldeado/controllers/UsuarioController.php?action=createPerfiles" class="btn btn-primary">
                     <i class="fas fa-plus me-2"></i>Nuevo Perfil
                 </a>
             </div>
@@ -122,7 +122,7 @@ try {
                     'message' => 'No hay perfiles registrados',
                     'icon' => 'fas fa-user-shield',
                     'subtext' => 'Comience creando el primer perfil del sistema.',
-                    'action' => '<a href="crear_perfil.php" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Crear Primer Perfil</a>'
+                    'action' => '<a href="/Sistema_Premoldeado/controllers/UsuarioController.php?action=createPerfiles" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Crear Primer Perfil</a>'
                 ]
             ];
             
@@ -135,7 +135,7 @@ try {
     <script>
     // Sobrescribir las funciones globales del componente table
     function editRecord(id) {
-        window.location.href = 'editar_perfil.php?id=' + id;
+        window.location.href = '/Sistema_Premoldeado/controllers/UsuarioController.php?action=editPerfiles&id=' + id;
     }
     
     function deleteRecord(id) {
@@ -147,7 +147,7 @@ try {
             // Crear formulario para enviar la eliminación
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = '../../../../controllers/UsuarioController.php?action=deletePerfiles&id=' + id;
+            form.action = '/Sistema_Premoldeado/controllers/UsuarioController.php?action=deletePerfiles&id=' + id;
             
             document.body.appendChild(form);
             form.submit();

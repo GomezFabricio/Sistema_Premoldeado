@@ -6,14 +6,13 @@
 
 require_once __DIR__ . '/BaseController.php';
 require_once __DIR__ . '/../models/Usuario.php';
+require_once __DIR__ . '/../config/modules.php';
 
 class UsuarioController extends BaseController {
     
     public function listar() {
-        // Verificar acceso al módulo de usuarios (módulo ID 1)
-        if (!$this->auth->verificarAccesoModulo(1)) {
-            $this->redirect('../dashboard.php', 'No tienes permisos para acceder a este módulo', 'error');
-        }
+        // Verificar acceso al módulo de usuarios
+        $this->verificarAccesoModulo(ModuleConfig::USUARIOS);
         
         // Datos para la vista
         $datos = [
@@ -27,10 +26,8 @@ class UsuarioController extends BaseController {
     }
     
     public function crear() {
-        // Verificar acceso
-        if (!$this->auth->verificarAccesoModulo(1)) {
-            $this->redirect('../dashboard.php', 'No tienes permisos para acceder a este módulo', 'error');
-        }
+        // Verificar acceso al módulo de usuarios
+        $this->verificarAccesoModulo(ModuleConfig::USUARIOS);
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Procesar creación
@@ -100,9 +97,9 @@ class UsuarioController extends BaseController {
         require_once __DIR__ . '/NavigationController.php';
         
         try {
-            // Verificar acceso al módulo de usuarios (módulo ID 1)
+            // Verificar acceso al módulo de usuarios
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(1)) {
+            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
                 NavigationController::redirect(
                     NavigationController::getDashboardUrl(),
                     'No tienes permisos para acceder a este módulo',
@@ -141,9 +138,9 @@ class UsuarioController extends BaseController {
         require_once __DIR__ . '/NavigationController.php';
         
         try {
-            // Verificar acceso al módulo de usuarios (módulo ID 1)
+            // Verificar acceso al módulo de usuarios
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(1)) {
+            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
                 NavigationController::redirect(
                     NavigationController::getDashboardUrl(),
                     'No tienes permisos para acceder a este módulo',
@@ -189,7 +186,7 @@ class UsuarioController extends BaseController {
             
             // Verificar acceso al módulo de usuarios (módulo ID 1)
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(1)) {
+            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
                 echo json_encode(['success' => false, 'message' => 'No tienes permisos para realizar esta acción']);
                 exit;
             }
@@ -267,37 +264,36 @@ class UsuarioController extends BaseController {
      * @return void
      */
     public static function editPerfiles($id) {
+        require_once __DIR__ . '/NavigationController.php';
+        
         try {
-            // Verificar acceso al módulo de usuarios (módulo ID 1)
+            // Verificar acceso al módulo de usuarios
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(1)) {
-                header('Location: ../../dashboard.php');
-                $_SESSION['flash_message'] = [
-                    'message' => 'No tienes permisos para acceder a este módulo',
-                    'type' => 'error'
-                ];
-                exit;
+            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
+                NavigationController::redirect(
+                    NavigationController::getDashboardUrl(),
+                    'No tienes permisos para acceder a este módulo',
+                    'error'
+                );
             }
             
             // Validar ID
             if (!is_numeric($id) || $id <= 0) {
-                header('Location: listado_perfiles.php');
-                $_SESSION['flash_message'] = [
-                    'message' => 'ID de perfil inválido',
-                    'type' => 'error'
-                ];
-                exit;
+                NavigationController::redirect(
+                    NavigationController::buildControllerUrl('Usuario', 'indexPerfiles'),
+                    'ID de perfil inválido',
+                    'error'
+                );
             }
             
             // Obtener datos del perfil
             $perfil = Usuario::obtenerPerfilPorId($id);
             if (!$perfil) {
-                header('Location: listado_perfiles.php');
-                $_SESSION['flash_message'] = [
-                    'message' => 'El perfil especificado no existe',
-                    'type' => 'error'
-                ];
-                exit;
+                NavigationController::redirect(
+                    NavigationController::buildControllerUrl('Usuario', 'indexPerfiles'),
+                    'El perfil especificado no existe',
+                    'error'
+                );
             }
             
             // Obtener módulos disponibles y asignados
@@ -306,124 +302,21 @@ class UsuarioController extends BaseController {
             $modulosAsignadosIds = array_column($modulosAsignados, 'id');
             
             // Preparar datos para la vista
-            $datos = [
-                'pageTitle' => 'Editar Perfil',
-                'perfil' => $perfil,
-                'modulos' => $modulos,
-                'modulosAsignados' => $modulosAsignadosIds,
-                'usuario' => $auth->getUsuarioLogueado()
-            ];
-            
-            // Incluir la vista
             $pageTitle = 'Editar Perfil';
             $usuario = $auth->getUsuarioLogueado();
             
+            // Renderizar la vista usando los archivos reales
             include __DIR__ . '/../views/layouts/header.php';
-            ?>
-            
-            <!-- Contenido de Editar Perfil -->
-            <div class="row">
-                <div class="col-12">
-                    <!-- Título de la página -->
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h1 class="h3 mb-0">
-                            <i class="fas fa-edit me-2"></i>
-                            Editar Perfil: <?= htmlspecialchars($perfil['nombre']) ?>
-                        </h1>
-                        <a href="listado_perfiles.php" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Volver al Listado
-                        </a>
-                    </div>
-                    
-                    <!-- Formulario de Editar Perfil -->
-                    <div class="card">
-                        <div class="card-body">
-                            <form action="../../controllers/UsuarioController.php?action=updatePerfiles" method="POST" id="formEditarPerfil">
-                                <input type="hidden" name="id" value="<?= htmlspecialchars($perfil['id']) ?>">
-                                
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="nombre" class="form-label">Nombre del Perfil <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="nombre" name="nombre" value="<?= htmlspecialchars($perfil['nombre']) ?>" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="activo" class="form-label">Estado</label>
-                                            <select class="form-select" id="activo" name="activo">
-                                                <option value="1" <?= $perfil['activo'] ? 'selected' : '' ?>>Activo</option>
-                                                <option value="0" <?= !$perfil['activo'] ? 'selected' : '' ?>>Inactivo</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="descripcion" class="form-label">Descripción</label>
-                                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3"><?= htmlspecialchars($perfil['descripcion'] ?? '') ?></textarea>
-                                </div>
-                                
-                                <div class="mb-4">
-                                    <label class="form-label">Módulos Asignados <span class="text-danger">*</span></label>
-                                    <div class="row">
-                                        <?php if (!empty($modulos)): ?>
-                                            <?php foreach ($modulos as $modulo): ?>
-                                                <?php $isChecked = in_array($modulo['id'], $modulosAsignadosIds); ?>
-                                                <div class="col-md-4 mb-2">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="modulo_<?= $modulo['id'] ?>" name="modulos[]" value="<?= $modulo['id'] ?>" <?= $isChecked ? 'checked' : '' ?>>
-                                                        <label class="form-check-label" for="modulo_<?= $modulo['id'] ?>">
-                                                            <i class="<?= htmlspecialchars($modulo['icono'] ?? 'fas fa-circle') ?> me-2"></i>
-                                                            <?= htmlspecialchars($modulo['nombre']) ?>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        <?php else: ?>
-                                            <div class="col-12">
-                                                <p class="text-muted">No hay módulos disponibles.</p>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                                
-                                <div class="d-flex justify-content-end gap-2">
-                                    <a href="listado_perfiles.php" class="btn btn-secondary">
-                                        <i class="fas fa-times me-2"></i>Cancelar
-                                    </a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save me-2"></i>Actualizar Perfil
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <script>
-            document.getElementById('formEditarPerfil').addEventListener('submit', function(e) {
-                const modulos = document.querySelectorAll('input[name="modulos[]"]:checked');
-                if (modulos.length === 0) {
-                    e.preventDefault();
-                    alert('Debe seleccionar al menos un módulo para el perfil.');
-                    return false;
-                }
-            });
-            </script>
-            
-            <?php
+            include __DIR__ . '/../views/pages/usuarios/perfiles/editar_perfil.php';
             include __DIR__ . '/../views/layouts/footer.php';
             
         } catch (Exception $e) {
             error_log("Error en editPerfiles: " . $e->getMessage());
-            header('Location: listado_perfiles.php');
-            $_SESSION['flash_message'] = [
-                'message' => 'Error interno del servidor',
-                'type' => 'error'
-            ];
-            exit;
+            NavigationController::redirect(
+                NavigationController::buildControllerUrl('Usuario', 'indexPerfiles'),
+                'Error interno del servidor',
+                'error'
+            );
         }
     }
     
@@ -444,7 +337,7 @@ class UsuarioController extends BaseController {
             
             // Verificar acceso al módulo de usuarios (módulo ID 1)
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(1)) {
+            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
                 echo json_encode(['success' => false, 'message' => 'No tienes permisos para realizar esta acción']);
                 exit;
             }
@@ -539,7 +432,7 @@ class UsuarioController extends BaseController {
             
             // Verificar acceso al módulo de usuarios (módulo ID 1)
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(1)) {
+            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
                 echo json_encode(['success' => false, 'message' => 'No tienes permisos para realizar esta acción']);
                 exit;
             }
@@ -575,7 +468,7 @@ class UsuarioController extends BaseController {
         try {
             // Verificar acceso al módulo de usuarios (módulo ID 1)
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(1)) {
+            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
                 echo json_encode(['success' => false, 'message' => 'No tienes permisos para realizar esta acción']);
                 exit;
             }
@@ -612,6 +505,11 @@ if (isset($_GET['action'])) {
             break;
         case 'createPerfiles':
             UsuarioController::createPerfiles();
+            break;
+        case 'editPerfiles':
+            if (isset($_GET['id'])) {
+                UsuarioController::editPerfiles($_GET['id']);
+            }
             break;
         case 'storePerfiles':
             UsuarioController::storePerfiles();

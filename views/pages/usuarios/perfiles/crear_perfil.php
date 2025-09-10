@@ -4,53 +4,31 @@
  * Submódulo del módulo Usuarios
  */
 
-// Iniciar sesión si no está iniciada
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Esta vista recibe las siguientes variables del controlador:
+// $modulos - Lista de todos los módulos disponibles
+// $pageTitle - Título de la página
+// $usuario - Usuario logueado
 
-// Cargar dependencias
-require_once __DIR__ . '/../../../../controllers/AuthController.php';
-require_once __DIR__ . '/../../../../models/Usuario.php';
+?>
 
-try {
-    // Verificar acceso al módulo de usuarios (módulo ID 1)
-    $auth = new AuthController();
-    if (!$auth->verificarAccesoModulo(1)) {
-        header('Location: http://localhost/Sistema_Premoldeado/views/pages/dashboard.php');
-        $_SESSION['flash_message'] = [
-            'message' => 'No tienes permisos para acceder a este módulo',
-            'type' => 'error'
-        ];
-        exit;
-    }
-    
-    // Obtener todos los módulos para el formulario
-    $modulos = Usuario::obtenerTodosModulos();
-    
-    // Preparar datos para la vista
-    $pageTitle = 'Crear Perfil';
-    $usuario = $auth->getUsuarioLogueado();
-    ?>
-    
-    <!-- Contenido de Crear Perfil -->
-    <div class="row">
-        <div class="col-12">
-            <!-- Título de la página -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">
-                    <i class="fas fa-plus-circle me-2"></i>
-                    Crear Nuevo Perfil
-                </h1>
-                <a href="listado_perfiles.php" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Volver al Listado
-                </a>
-            </div>
-            
-            <!-- Formulario de Crear Perfil -->
+<!-- Contenido de Crear Perfil -->
+<div class="row">
+    <div class="col-12">
+        <!-- Título de la página -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-plus-circle me-2"></i>
+                Crear Nuevo Perfil
+            </h1>
+            <a href="/Sistema_Premoldeado/controllers/UsuarioController.php?action=indexPerfiles" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver al Listado
+            </a>
+        </div>
+        
+        <!-- Formulario de Crear Perfil -->
             <div class="card">
                 <div class="card-body">
-                    <form action="../../../../controllers/UsuarioController.php?action=storePerfiles" method="POST" id="formCrearPerfil">
+                    <form action="/Sistema_Premoldeado/controllers/UsuarioController.php?action=storePerfiles" method="POST" id="formCrearPerfil">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -98,7 +76,7 @@ try {
                         </div>
                         
                         <div class="d-flex justify-content-end gap-2">
-                            <a href="listado_perfiles.php" class="btn btn-secondary">
+                            <a href="/Sistema_Premoldeado/controllers/UsuarioController.php?action=indexPerfiles" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>Cancelar
                             </a>
                             <button type="submit" class="btn btn-primary">
@@ -121,14 +99,3 @@ try {
         }
     });
     </script>
-    
-} catch (Exception $e) {
-    error_log("Error en crear perfil: " . $e->getMessage());
-    header('Location: listado_perfiles.php');
-    $_SESSION['flash_message'] = [
-        'message' => 'Error interno del servidor',
-        'type' => 'error'
-    ];
-    exit;
-}
-?>
