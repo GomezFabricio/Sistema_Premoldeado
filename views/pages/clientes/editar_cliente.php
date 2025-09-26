@@ -4,7 +4,7 @@ $pageTitle = "Editar Cliente";
 
 // TODO: $cliente = ClienteController::obtenerPorId($_GET['id']);
 
-include_once '../../../layouts/header.php';
+include_once __DIR__ . '/../../layouts/header.php';
 ?>
 
 <div class="container-fluid">

@@ -1,6 +1,4 @@
-        </div>
-    </div>
-</main>
+
 
 <!-- Footer Simple -->
 <footer class="bg-light border-top py-3 mt-auto">

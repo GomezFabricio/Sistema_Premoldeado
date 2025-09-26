@@ -32,6 +32,13 @@ function obtenerEstadisticas() {
             'url' => 'usuarios/listado_usuarios.php'
         ],
         [
+            'title' => 'Perfiles',
+            'value' => '3',
+            'icon' => 'fas fa-user-shield',
+            'color' => 'dark',
+            'url' => 'usuarios/perfiles/listado_perfiles.php'
+        ],
+        [
             'title' => 'Clientes',
             'value' => '150',
             'icon' => 'fas fa-user-tie',
@@ -39,11 +46,25 @@ function obtenerEstadisticas() {
             'url' => 'clientes/listado_clientes.php'
         ],
         [
+            'title' => 'Proveedores',
+            'value' => '20',
+            'icon' => 'fas fa-truck',
+            'color' => 'warning',
+            'url' => 'proveedores/listado_proveedores.php'
+        ],
+        [
             'title' => 'Productos',
             'value' => '89',
             'icon' => 'fas fa-boxes',
             'color' => 'info',
-            'url' => 'productos/listado_productos.php'
+            'url' => '../../index.php?controller=producto&action=listado'
+        ],
+        [
+            'title' => 'Producciones',
+            'value' => '0',
+            'icon' => 'fas fa-industry',
+            'color' => 'secondary',
+            'url' => '../../index.php?controller=produccion&action=listado'
         ],
         [
             'title' => 'Pedidos',
@@ -51,6 +72,13 @@ function obtenerEstadisticas() {
             'icon' => 'fas fa-shopping-cart',
             'color' => 'warning',
             'url' => 'pedidos/listado_pedidos.php'
+        ],
+        [
+            'title' => 'Ventas',
+            'value' => '0',
+            'icon' => 'fas fa-cash-register',
+            'color' => 'success',
+            'url' => 'ventas/listado_ventas.php'
         ]
     ];
 }

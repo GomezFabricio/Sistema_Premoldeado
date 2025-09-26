@@ -1,84 +1,74 @@
+
 <?php
 session_start();
-$pageTitle = "Editar Producto";
+include_once __DIR__ . '/../../layouts/header.php';
+require_once '../../../models/Producto.php';
+$producto = new Producto();
+$tiposProducto = $producto->obtenerTiposProducto();
+$mensajeExito = $_SESSION['mensaje_exito'] ?? '';
+$mensajeError = $_SESSION['mensaje_error'] ?? '';
+unset($_SESSION['mensaje_exito'], $_SESSION['mensaje_error']);
 
-// TODO: $producto = ProductoController::obtenerPorId($_GET['id']);
-// TODO: $tipos_producto = TipoProductoController::obtenerTodos();
-
-include_once '../../../layouts/header.php';
+$id = $_GET['id'] ?? null;
+$datos = $id ? $producto->obtenerPorId($id) : null;
+if (!$datos) {
+	echo '<div class="alert alert-danger">Producto no encontrado.</div>';
+	include_once __DIR__ . '/../../layouts/footer.php';
+	exit;
+}
 ?>
+<script>
 
-<div class="container-fluid">
-    <div class="d-flex justify-content-between mb-4">
-        <h2><i class="fas fa-box text-primary me-2"></i>Editar Producto</h2>
-        <a href="listado_productos.php" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Volver al Listado</a>
-    </div>
+	<?php if ($mensajeExito): ?>
+		<div class="alert alert-success"><?= htmlspecialchars($mensajeExito) ?></div>
+	<?php endif; ?>
+	<?php if ($mensajeError): ?>
+		<div class="alert alert-danger"><?= htmlspecialchars($mensajeError) ?></div>
+	<?php endif; ?>
 
-    <div class="card">
-        <div class="card-body">
-            <form action="" method="POST">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="ancho" class="form-label">Ancho</label>
-                            <input type="text" class="form-control" id="ancho" name="ancho" value="" required>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="largo" class="form-label">Largo</label>
-                            <input type="text" class="form-control" id="largo" name="largo" value="" required>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="mb-3">
-                            <label for="cantidad_disponible" class="form-label">Cantidad Disponible</label>
-                            <input type="number" class="form-control" id="cantidad_disponible" name="cantidad_disponible" min="0" value="" required>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="mb-3">
-                            <label for="stock_minimo" class="form-label">Stock Mínimo</label>
-                            <input type="number" class="form-control" id="stock_minimo" name="stock_minimo" min="0" value="" required>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="mb-3">
-                            <label for="precio_unitario" class="form-label">Precio Unitario</label>
-                            <input type="number" class="form-control" id="precio_unitario" name="precio_unitario" step="0.01" min="0" value="" required>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="tipo_producto_id" class="form-label">Tipo de Producto</label>
-                            <select class="form-select" id="tipo_producto_id" name="tipo_producto_id" required>
-                                <option value="">Seleccionar tipo...</option>
-                                <!-- TODO: Cargar desde base de datos con valor seleccionado -->
-                                <option value="1">Alcantarilla</option>
-                                <option value="2">Pilar</option>
-                                <option value="3">Cámara</option>
-                                <option value="5">Cámara Séptica</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="activo" class="form-label">Estado</label>
-                            <select class="form-select" id="activo" name="activo" required>
-                                <option value="1">Activo</option>
-                                <option value="0">Inactivo</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Actualizar</button>
-                    <a href="listado_productos.php" class="btn btn-secondary">Cancelar</a>
-                </div>
-            </form>
-        </div>
-    </div>
+	<form action="../../../controllers/ProductoController.php?action=actualizar" method="POST" class="card p-4 shadow-sm">
+		<input type="hidden" name="id" value="<?= htmlspecialchars($datos['id']) ?>">
+		<div class="row mb-3">
+			<div class="col-md-6" id="campo-ancho">
+				<label for="ancho" class="form-label">Ancho</label>
+				<input type="number" step="0.01" class="form-control" name="ancho" id="ancho" value="<?= htmlspecialchars($datos['ancho']) ?>" required>
+			</div>
+			<div class="col-md-6" id="campo-largo">
+				<label for="largo" class="form-label">Largo</label>
+				<input type="number" step="0.01" class="form-control" name="largo" id="largo" value="<?= htmlspecialchars($datos['largo']) ?>" required>
+			</div>
+		</div>
+		<div class="row mb-3">
+			<div class="col-md-6" id="campo-cantidad">
+				<label for="cantidad_disponible" class="form-label">Cantidad Disponible</label>
+				<input type="number" class="form-control" name="cantidad_disponible" id="cantidad_disponible" value="<?= htmlspecialchars($datos['cantidad_disponible']) ?>" required>
+			</div>
+			<div class="col-md-6" id="campo-stock-minimo">
+				<label for="stock_minimo" class="form-label">Stock Mínimo</label>
+				<input type="number" class="form-control" name="stock_minimo" id="stock_minimo" value="<?= htmlspecialchars($datos['stock_minimo']) ?>" required>
+			</div>
+		</div>
+		<div class="row mb-3">
+			<div class="col-md-6" id="campo-precio-unitario">
+				<label for="precio_unitario" class="form-label">Precio Unitario</label>
+				<input type="number" step="0.01" class="form-control" name="precio_unitario" id="precio_unitario" value="<?= htmlspecialchars($datos['precio_unitario']) ?>" required>
+			</div>
+			<div class="col-md-6">
+				<label for="tipo_producto_id" class="form-label">Tipo de Producto</label>
+				<select class="form-select" name="tipo_producto_id" id="tipo_producto_id" onchange="mostrarCamposPorTipo()" required>
+					<option value="">Seleccione...</option>
+					<?php foreach ($tiposProducto as $tipo): ?>
+						<option value="<?= $tipo['id'] ?>" <?= $datos['tipo_producto_id'] == $tipo['id'] ? 'selected' : '' ?>><?= htmlspecialchars($tipo['nombre']) ?></option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+		</div>
+		<div class="d-flex justify-content-end">
+			<button type="submit" class="btn btn-primary">
+				<i class="fas fa-save me-1"></i> Guardar Cambios
+			</button>
+		</div>
+	</form>
 </div>
 
-<?php include '../../../layouts/footer.php'; ?>
+<?php include_once __DIR__ . '/../../layouts/footer.php'; ?>

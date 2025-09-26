@@ -13,9 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initUtilities();
 });
 
-/**
- * Inicializar menú móvil
- */
+
 function initMobileMenu() {
     const navToggle = document.getElementById('navToggle');
     const navMenu = document.getElementById('navMenu');

@@ -1023,3 +1023,21 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+CREATE OR REPLACE VIEW vista_produccion_completa AS
+SELECT
+  p.id,
+  p.codigo_produccion,
+  p.producto_id,
+  prod.nombre AS producto_nombre,
+  p.cantidad_planificada,
+  p.fecha_inicio_planificada,
+  p.fecha_fin_planificada,
+  p.observaciones,
+  p.estado_produccion_id,
+  ep.nombre AS estado_nombre
+FROM
+  produccion p
+  INNER JOIN producto prod ON p.producto_id = prod.id
+  INNER JOIN estado_produccion ep ON p.estado_produccion_id = ep.id;
+  prod.activo

@@ -1,49 +1,59 @@
+
 <?php
-session_start();
-$pageTitle = "Gestión de Productos";
-
-// TODO: $data = ProductoController::obtenerTodos();
-$data = [];
-
-$config = [
-    'id' => 'productos_table',
-    'columns' => [
-        'id' => ['label' => 'ID'],
-        'dimensiones' => ['label' => 'Dimensiones'],
-        'tipo_nombre' => ['label' => 'Tipo'],
-        'cantidad_disponible' => ['label' => 'Stock'],
-        'precio_unitario' => ['label' => 'Precio'],
-        'activo' => ['label' => 'Estado']
-    ],
-    'actions' => [
-        ['label' => 'Ver', 'icon' => 'fas fa-eye', 'onclick' => 'verProducto({id})'],
-        ['label' => 'Editar', 'icon' => 'fas fa-edit', 'onclick' => 'editarProducto({id})']
-    ]
-];
-
-include_once '../../../layouts/header.php';
+// Listado de productos activos
+include_once __DIR__ . '/../../layouts/header.php';
+$titulo = "Listado de Productos";
+if (!isset($items)) {
+    require_once '../../../models/Producto.php';
+    $producto = new Producto();
+    $items = $producto->listar();
+}
 ?>
-
 <div class="container-fluid">
-    <div class="d-flex justify-content-between mb-4">
-        <h2><i class="fas fa-boxes text-primary me-2"></i>Gestión de Productos</h2>
-        <a href="create.php" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Nuevo Producto</a>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-boxes text-primary me-2"></i><?= $titulo ?></h2>
     </div>
-
-    <?php if (!empty($data)): ?>
-        <?php include '../../components/table.php'; ?>
-    <?php else: ?>
-        <div class="alert alert-info text-center">
-            <i class="fas fa-boxes fa-2x mb-2"></i>
-            <h5>No hay productos registrados</h5>
-            <a href="create.php" class="btn btn-primary mt-2">Crear Primer Producto</a>
-        </div>
-    <?php endif; ?>
+    <div class="mb-3">
+        <a href="/Sistema_Premoldeado/views/pages/productos/crear_producto.php" class="btn btn-success">Nuevo Producto</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped table-hover" id="productos_table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ancho</th>
+                    <th>Largo</th>
+                    <th>Cantidad</th>
+                    <th>Stock Mínimo</th>
+                    <th>Precio Unitario</th>
+                    <th>Tipo Producto</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($items)): ?>
+                    <tr><td colspan="8" style="text-align:center;">No hay productos activos.</td></tr>
+                <?php else: ?>
+                    <?php foreach ($items as $item): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($item['id']) ?></td>
+                            <td><?= htmlspecialchars($item['ancho']) ?></td>
+                            <td><?= htmlspecialchars($item['largo']) ?></td>
+                            <td><?= htmlspecialchars($item['cantidad_disponible']) ?></td>
+                            <td><?= htmlspecialchars($item['stock_minimo']) ?></td>
+                            <td><?= htmlspecialchars($item['precio_unitario']) ?></td>
+                            <td><?= htmlspecialchars($item['tipo_producto_id']) ?></td>
+                            <td>
+                                <a href="/Sistema_Premoldeado/views/pages/productos/editar_producto.php?id=<?= urlencode($item['id']) ?>" class="btn btn-sm btn-primary">Editar</a>
+                                <a href="/Sistema_Premoldeado/views/pages/productos/baja_producto.php?id=<?= urlencode($item['id']) ?>" class="btn btn-sm btn-warning">Baja lógica</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
 
-<script>
-function verProducto(id) { window.location.href = `view.php?id=${id}`; }
-function editarProducto(id) { window.location.href = `edit.php?id=${id}`; }
-</script>
 
-<?php include '../../../layouts/footer.php'; ?>
+<?php include __DIR__ . '/../../layouts/footer.php'; ?>

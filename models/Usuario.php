@@ -9,9 +9,9 @@ class Usuario {
     }
     
     public function autenticar($email, $password) {
-        $sql = "SELECT u.id, u.nombre_usuarios, u.email, u.password, u.activo, u.perfiles_id, p.nombre as perfil_nombre 
+        $sql = "SELECT u.id, u.nombre_usuario, u.email, u.password, u.activo, u.perfil_id, p.nombre as perfil_nombre 
                 FROM usuarios u 
-                INNER JOIN perfiles p ON u.perfiles_id = p.id 
+                INNER JOIN perfiles p ON u.perfil_id = p.id 
                 WHERE u.email = ? AND u.activo = 1";
         
         $stmt = $this->db->prepare($sql);
@@ -22,6 +22,47 @@ class Usuario {
             return $usuario;
         }
         return false;
+    }
+    
+    /**
+     * Listar todos los usuarios usando vista completa
+     * 
+     * @param int $limite Número máximo de registros (opcional)
+     * @param int $offset Desplazamiento para paginación (opcional)
+     * @return array Array de usuarios con datos completos
+     */
+    public function listar($limite = null, $offset = 0) {
+        try {
+            $sql = "SELECT 
+                        usuario_id as id,
+                        nombre_usuario,
+                        nombre_completo,
+                        email_acceso as email,
+                        telefono,
+                        perfil_nombre,
+                        CASE WHEN usuario_activo = 1 THEN 'Activo' ELSE 'Inactivo' END as estado,
+                        ultimo_acceso
+                    FROM vista_usuarios_completa 
+                    ORDER BY nombre_completo ASC";
+            
+            if ($limite !== null) {
+                $sql .= " LIMIT ? OFFSET ?";
+            }
+            
+            $stmt = $this->db->prepare($sql);
+            
+            if ($limite !== null) {
+                $stmt->execute([$limite, $offset]);
+            } else {
+                $stmt->execute();
+            }
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+        } catch (PDOException $e) {
+            error_log("Error al listar usuarios: " . $e->getMessage());
+            return [];
+        }
     }
     
     /**
@@ -55,7 +96,7 @@ class Usuario {
                         COUNT(DISTINCT u.id) as total_usuarios
                     FROM perfiles p
                     LEFT JOIN perfiles_modulos pm ON p.id = pm.perfiles_id
-                    LEFT JOIN usuarios u ON p.id = u.perfiles_id
+                    LEFT JOIN usuarios u ON p.id = u.perfil_id
                     GROUP BY p.id, p.nombre
                     ORDER BY p.nombre ASC";
             
@@ -251,7 +292,7 @@ class Usuario {
             $db = Database::getInstance()->getConnection();
             
             // Verificar si hay usuarios asociados a este perfil
-            $sqlVerificar = "SELECT COUNT(*) as total FROM usuarios WHERE perfiles_id = ?";
+            $sqlVerificar = "SELECT COUNT(*) as total FROM usuarios WHERE perfil_id = ?";
             $stmtVerificar = $db->prepare($sqlVerificar);
             $stmtVerificar->execute([$id]);
             $resultado = $stmtVerificar->fetch();

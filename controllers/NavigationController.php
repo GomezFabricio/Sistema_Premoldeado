@@ -78,10 +78,10 @@ class NavigationController {
             ],
             4 => [ // Materiales
                 'icono' => 'fas fa-cubes',
-                'url' => self::$baseUrl . '/controllers/MaterialController.php?action=index',
+                'url' => self::$baseUrl . '/views/pages/materiales/listado_materiales.php',
                 'submodulos' => [
-                    ['nombre' => 'Listado de Materiales', 'url' => self::$baseUrl . '/controllers/MaterialController.php?action=index'],
-                    ['nombre' => 'Crear Material', 'url' => self::$baseUrl . '/controllers/MaterialController.php?action=create']
+                    ['nombre' => 'Listado de Materiales', 'url' => self::$baseUrl . '/views/pages/materiales/listado_materiales.php'],
+                    ['nombre' => 'Crear Material', 'url' => self::$baseUrl . '/views/pages/materiales/crear_material_entry.php']
                 ]
             ],
             5 => [ // Pedidos y reservas
@@ -101,11 +101,10 @@ class NavigationController {
             6 => [ // Producción
                 'icono' => 'fas fa-industry',
                 'url' => self::$baseUrl . '/controllers/ProduccionController.php?action=index',
-                'submodulos' => [
-                    ['nombre' => 'Listado de Producción', 'url' => self::$baseUrl . '/controllers/ProduccionController.php?action=index'],
-                    ['nombre' => 'Crear Producción', 'url' => self::$baseUrl . '/controllers/ProduccionController.php?action=create'],
-                    ['nombre' => 'Estados de Producción', 'url' => self::$baseUrl . '/controllers/ProduccionController.php?action=indexEstados']
-                ]
+            'submodulos' => [
+                ['nombre' => 'Listado de Producción', 'url' => self::$baseUrl . '/controllers/ProduccionController.php?action=index'],
+                ['nombre' => 'Crear Producción', 'url' => self::$baseUrl . '/controllers/ProduccionController.php?action=create']
+            ]
             ],
             7 => [ // Proveedores
                 'icono' => 'fas fa-truck',

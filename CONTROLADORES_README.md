@@ -1,167 +1,121 @@
-# Sistema de Controladores - Documentación
+## ANÁLISIS DE MÓDULOS, CIRCUITO DEL SISTEMA Y REVISIÓN DE PERSONAS (CLIENTES)
 
-## Resumen
-He implementado un sistema completo de controladores para manejar la autenticación y el flujo de información del sistema de premoldeado.
+### 1. Módulos Detectados y Estado CRUD
 
-## Archivos Creados/Modificados
+| Módulo        | Controlador | Vistas | CRUD (Listar, Alta, Baja, Modificar) | Estado |
+|-------------- |:-----------:|:------:|:------------------------------------:|:------:|
+| Productos     |   ✅        |  ✅    |   ✅                                | ✅ Completo |
+| Producción    |   ✅        |  ✅    |   ✅                                | ✅ Completo |
+| Materiales    |   ✅        |  ✅    |   ✅                                | ✅ Completo |
+| Ventas        |   ✅        |  ✅    |   ✅                                | ✅ Completo |
+| Pedidos       |   ✅        |  ✅    |   ✅                                | ✅ Completo |
+| Usuarios      |   ✅        |  ✅    |   ✅                                | ✅ Completo |
+| Proveedores   |   ✅        |  ✅    |   ✅                                | ✅ Completo |
+| Personas      |   ✅        |  ✅    |   ✅                                | ✅ Completo |
 
-### 1. AuthController.php
-**Ubicación:** `controllers/AuthController.php`
-**Función:** Maneja toda la lógica de autenticación
-- `login()` - Procesa el login y crea la sesión
-- `logout()` - Cierra la sesión del usuario
-- `verificarAutenticacion()` - Verifica si el usuario está logueado
-- `verificarAccesoModulo()` - Verifica permisos por módulo
-- `crearSesion()` - Crea la sesión con datos del usuario y módulos
+Todos los módulos principales tienen controlador, vistas y archivos para listar, crear, editar y baja lógica.
 
-### 2. BaseController.php
-**Ubicación:** `controllers/BaseController.php`
-**Función:** Controlador base con funcionalidad común
-- Verificación automática de autenticación
-- Métodos para renderizar vistas
-- Validación y sanitización de datos
-- Manejo de redirecciones y mensajes flash
-- Respuestas JSON
+---
 
-### 3. UsuarioController.php (Ejemplo)
-**Ubicación:** `controllers/UsuarioController.php`
-**Función:** Ejemplo de implementación de un controlador específico
-- Extiende BaseController
-- Verifica permisos por módulo
-- Muestra cómo estructurar métodos CRUD
+### 2. Circuito del Sistema (Mapa de Relaciones)
 
-## Archivos Modificados
+- **Personas** es la entidad base: de ella derivan Clientes, Proveedores y Usuarios.
+- **Clientes** y **Proveedores** dependen de Personas (por FK).
+- **Productos** y **Materiales** pueden estar vinculados a Proveedores.
+- **Pedidos** dependen de Clientes y Productos/Materiales.
+- **Producción** consume Materiales y genera Productos.
+- **Ventas** dependen de Clientes y Productos.
+- **Usuarios** dependen de Personas y Perfiles.
+- **Pedidos** y **Ventas** requieren que el módulo Personas esté completo y funcional.
 
-### 1. login.php
-**Cambios:**
-- Ahora usa AuthController en lugar de lógica directa
-- Mejor manejo de errores
-- Código más limpio y mantenible
+---
 
-### 2. index.php
-**Cambios:**
-- Simplificado a solo redirección usando AuthController
-- Eliminado código HTML mezclado
+### 3. Módulo Personas (Clientes) - Revisión CRUD
 
-### 3. header.php
-**Cambios:**
-- Integrado con AuthController para verificación de autenticación
+- **Controlador:** `PersonaController.php` implementa todos los métodos necesarios para CRUD (index, create, store, edit, update, delete).
+- **Vistas:** existen archivos para crear (`crear_persona.php`), editar (`editar_persona.php`) y listar (`listado_personas.php`) personas.
+- **Alta:** formulario completo en `crear_persona.php`.
+- **Edición:** formulario en `editar_persona.php` con carga de datos.
+- **Listado:** muestra todas las personas y permite editar/eliminar.
+- **Baja lógica:** la acción delete está presente y pide confirmación.
+- **Conclusión:** El módulo Personas tiene el CRUD completo y funcional.
 
-## Archivos Nuevos
+---
 
-### 1. dashboard.php
-**Ubicación:** `views/pages/dashboard.php`
-**Función:** Controlador y vista del dashboard principal unificados
+### 4. Avance seguro con el módulo Pedidos
 
-### 2. logout.php
-**Ubicación:** `views/pages/auth/logout.php`
-**Función:** Maneja el cierre de sesión
+**Dependencias:**
+- El módulo Pedidos depende de Personas (Clientes) y Productos/Materiales.
+- Antes de avanzar, asegúrate que:
+	- El CRUD de Personas funciona correctamente (ya validado).
+	- El CRUD de Productos/Materiales está operativo.
 
-## Flujo de Funcionamiento
+**Pasos para avanzar:**
+1. Verifica que el listado de clientes y productos esté accesible desde Pedidos.
+2. Implementa el formulario de creación de pedido, permitiendo seleccionar cliente y productos.
+3. Asegura que la relación entre pedido y cliente/producto se guarde correctamente.
+4. Implementa la edición y baja lógica de pedidos.
+5. Testea el flujo completo: alta, edición, baja y listado.
 
-### 1. Inicio de Sesión
-```
-index.php → AuthController → verifica sesión
-   ↓
-Si no logueado: login.php
-Si logueado: dashboard.php
-```
+---
 
-### 2. Login
-```
-login.php → AuthController.login() → autentica usuario
-   ↓
-Si éxito: crea sesión + obtiene módulos → dashboard
-Si falla: muestra error
-```
+### 5. Recomendaciones
 
-### 3. Dashboard
-```
-dashboard.php → DashboardController → verifica autenticación
-   ↓
-Obtiene datos del usuario y módulos → renderiza vista
-```
+- Mantén la documentación y el análisis en este archivo.
+- No dupliques archivos ni crees carpetas extra.
+- Avanza módulo por módulo, validando dependencias antes de implementar nuevas funcionalidades.
+| Clientes      |   ✅        |  ✅    |   ✅                                | ✅ Completo |
+| Personas      |   ❌        |  ❌    |   ❌                                | ❌ Faltante |
+| Perfiles      |   ❌        |  ❌    |   ❌                                | ❌ Faltante |
+| Compras       |   ❌        |  ❌    |   ❌                                | ❌ Faltante |
+| Auditoría     |   ❌        |  ❌    |   ❌                                | ❌ Faltante |
+| Reportes      |   ❌        |  ❌    |   ❌                                | ❌ Faltante |
 
-### 4. Verificación de Módulos
-```
-Cualquier página → BaseController → AuthController
-   ↓
-Verifica si usuario tiene acceso al módulo específico
-Si no: redirige con error
-Si sí: permite acceso
-```
+## 2. Detalle por Módulo
 
-## Características Implementadas
+- **Productos**: Controlador, vistas y CRUD completo. Alta, edición y baja lógica funcionales. Listado centralizado.
+- **Producción**: Controlador, vistas y CRUD completo. Integración con reservas y estados.
+- **Materiales**: Controlador, vistas y CRUD completo. Baja lógica implementada.
+- **Ventas**: Controlador y vistas presentes. Falta baja lógica y validación de edición.
+- **Pedidos**: Controlador y vistas presentes. Falta baja lógica y validación de edición.
+- **Usuarios**: Controlador, vistas y CRUD completo. Perfiles gestionados desde submódulo.
+- **Proveedores**: Controlador, vistas y CRUD completo. Baja lógica funcional.
+- **Clientes**: Controlador, vistas y CRUD completo. Baja lógica funcional.
+- **Personas, Perfiles, Compras, Auditoría, Reportes**: No detectados controladores ni vistas base. CRUD no implementado.
 
-### ✅ Seguridad
-- Verificación automática de autenticación
-- Verificación de permisos por módulo
-- Sanitización de datos de entrada
-- Regeneración de ID de sesión
-- Manejo seguro de cookies
+## 3. Mapa de Ruta y Dependencias
 
-### ✅ Estructura MVC
-- Separación clara de controladores y vistas
-- Controlador base con funcionalidad común
-- Reutilización de código
+- **Dependencias principales:**
+	- Pedidos → Clientes, Productos
+	- Producción → Productos, Materiales, Reservas
+	- Ventas → Productos, Clientes, Pedidos
+	- Proveedores → Personas
+	- Usuarios → Perfiles
+- **Prioridad de corrección:**
+	1. Ventas y Pedidos: Implementar baja lógica y validación de edición.
+	2. Personas y Perfiles: Crear controladores y vistas base, implementar CRUD.
+	3. Compras, Auditoría, Reportes: Crear módulos y controladores, definir vistas y lógica.
+	4. Mejorar validaciones y seguridad en todos los módulos.
 
-### ✅ Manejo de Errores
-- Validación de datos de entrada
-- Mensajes flash para feedback al usuario
-- Logging de errores
+## 4. Problemas Detectados y Sugerencias
 
-### ✅ Modularidad
-- Sistema de módulos basado en permisos
-- Menú dinámico según permisos del usuario
-- Fácil extensión para nuevos módulos
+- **Faltan controladores/vistas en módulos secundarios (Personas, Perfiles, Compras, Auditoría, Reportes).**
+	- Sugerencia: Crear archivos base y definir estructura mínima de CRUD.
+- **Ventas y Pedidos sin baja lógica.**
+	- Sugerencia: Implementar baja lógica en controladores y modelos.
+- **Dependencias no documentadas en algunos módulos.**
+	- Sugerencia: Agregar comentarios y diagramas de flujo en el código.
+- **Acceso directo a vistas sin pasar por controlador.**
+	- Sugerencia: Redirigir siempre por el controlador para cargar datos correctamente.
+- **Archivos duplicados y backups:**
+	- Sugerencia: Eliminar manualmente archivos viejos y carpetas duplicadas.
 
-## Cómo Usar
+## 5. Resumen y Siguiente Paso
 
-### 1. Para crear un nuevo controlador:
-```php
-<?php
-require_once __DIR__ . '/BaseController.php';
+- El sistema tiene los módulos principales operativos, pero requiere completar baja lógica y CRUD en ventas y pedidos, y crear módulos faltantes.
+- Priorizar corrección en dependencias críticas y asegurar que el acceso sea siempre por controlador.
+- Actualizar este reporte tras cada avance relevante.
 
-class MiControlador extends BaseController {
-    public function index() {
-        // Tu lógica aquí
-        $datos = ['pageTitle' => 'Mi Página'];
-        $this->render('ruta/a/vista.php', $datos);
-    }
-}
-?>
-```
+---
 
-### 2. Para verificar acceso a módulo:
-```php
-// En tu controlador
-if (!$this->auth->verificarAccesoModulo(ID_MODULO)) {
-    $this->redirect('../dashboard.php', 'Sin permisos', 'error');
-}
-```
-
-### 3. Para validar datos:
-```php
-$reglas = [
-    'nombre' => ['required' => true, 'type' => 'string'],
-    'email' => ['required' => true, 'type' => 'email']
-];
-$errores = $this->validarDatos($_POST, $reglas);
-```
-
-## Estado Actual
-- ✅ Sistema de autenticación completo
-- ✅ Controladores base implementados
-- ✅ Verificación de permisos por módulo
-- ✅ Menú dinámico funcionando
-- ✅ Dashboard con información del usuario
-- ✅ Manejo de sesiones seguro
-
-## Próximos Pasos
-1. Implementar controladores para cada módulo
-2. Crear vistas para los formularios CRUD
-3. Conectar con la base de datos real
-4. Implementar validaciones específicas
-5. Agregar más funcionalidades de seguridad (CSRF, etc.)
-
-El sistema ahora está listo para ser usado y extendido fácilmente.
+*Este reporte se actualiza solo en este archivo. No se generan carpetas ni reportes extra.*

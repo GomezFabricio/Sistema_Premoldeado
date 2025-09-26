@@ -72,27 +72,41 @@ class AuthController {
      * Crear sesión del usuario
      */
     private function crearSesion($usuario) {
-        // Regenerar ID de sesión por seguridad
-        session_regenerate_id(true);
-        
-        // Guardar datos del usuario en sesión
-        $_SESSION['usuario_id'] = $usuario['id'];
-        $_SESSION['usuario_nombre'] = $usuario['nombre_usuarios'];
-        $_SESSION['usuario_email'] = $usuario['email'];
-        $_SESSION['perfil_id'] = $usuario['perfiles_id'];
-        $_SESSION['perfil_nombre'] = $usuario['perfil_nombre'];
-        $_SESSION['login_time'] = time();
-        
-        // Obtener módulos del perfil y prepararlos para el menú
         try {
-            $modulos = $this->usuarioModel->obtenerModulosPorPerfil($usuario['perfiles_id']);
+            // Regenerar ID de sesión por seguridad
+            session_regenerate_id(true);
             
-            // NavigationController se encarga de asignar URLs y configuración
-            require_once __DIR__ . '/NavigationController.php';
-            $_SESSION['modulos'] = NavigationController::prepararModulosParaMenu($modulos);
+            // Validar que los campos requeridos existen en el array usuario
+            if (!isset($usuario['id']) || !isset($usuario['nombre_usuario']) || 
+                !isset($usuario['email']) || !isset($usuario['perfil_id'])) {
+                throw new Exception("Datos de usuario incompletos para crear sesión");
+            }
+            
+            // Guardar datos del usuario en sesión (usando nombres de campos actuales)
+            $_SESSION['usuario_id'] = $usuario['id'];
+            $_SESSION['usuario_nombre'] = $usuario['nombre_usuario'];  // Corregido: era nombre_usuarios
+            $_SESSION['usuario_email'] = $usuario['email'];
+            $_SESSION['perfil_id'] = $usuario['perfil_id'];           // Corregido: era perfiles_id
+            $_SESSION['perfil_nombre'] = $usuario['perfil_nombre'] ?? 'Sin perfil';
+            $_SESSION['login_time'] = time();
+            
+            // Obtener módulos del perfil y prepararlos para el menú
+            try {
+                $modulos = $this->usuarioModel->obtenerModulosPorPerfil($usuario['perfil_id']);
+                
+                // NavigationController se encarga de asignar URLs y configuración
+                require_once __DIR__ . '/NavigationController.php';
+                $_SESSION['modulos'] = NavigationController::prepararModulosParaMenu($modulos);
+            } catch (Exception $e) {
+                error_log("Error obteniendo módulos para perfil {$usuario['perfil_id']}: " . $e->getMessage());
+                $_SESSION['modulos'] = [];
+            }
+            
         } catch (Exception $e) {
-            error_log("Error obteniendo módulos: " . $e->getMessage());
-            $_SESSION['modulos'] = [];
+            error_log("Error crítico creando sesión: " . $e->getMessage());
+            // En caso de error crítico, limpiar sesión parcial
+            $_SESSION = [];
+            throw new Exception("Error interno creando sesión de usuario");
         }
     }
     

@@ -9,8 +9,69 @@ if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['modulos'])) {
     return;
 }
 
-// Obtener módulos del usuario desde la sesión
-$menuModulos = $_SESSION['modulos'];
+// Menú principal limpio y ordenado
+$menuModulos = [
+    [
+        'nombre' => 'Dashboard',
+        'url' => '/Sistema_Premoldeado/views/pages/dashboard.php',
+        'icono' => 'fas fa-tachometer-alt',
+        'submodulos' => []
+    ],
+    [
+        'nombre' => 'Productos',
+        'url' => '/Sistema_Premoldeado/views/pages/productos/listado_productos.php',
+        'icono' => 'fas fa-boxes',
+        'submodulos' => []
+    ],
+    [
+        'nombre' => 'Producción',
+        'url' => '/Sistema_Premoldeado/views/pages/produccion/listado_producciones.php',
+        'icono' => 'fas fa-industry',
+        'submodulos' => []
+    ],
+    [
+        'nombre' => 'Materiales',
+        'url' => '/Sistema_Premoldeado/views/pages/materiales/listado_materiales.php',
+        'icono' => 'fas fa-cubes',
+        'submodulos' => []
+    ],
+    [
+        'nombre' => 'Clientes',
+        'url' => '/Sistema_Premoldeado/views/pages/clientes/listado_clientes.php',
+        'icono' => 'fas fa-user-tie',
+        'submodulos' => []
+    ],
+    [
+        'nombre' => 'Proveedores',
+        'url' => '/Sistema_Premoldeado/views/pages/proveedores/listado_proveedores.php',
+        'icono' => 'fas fa-truck',
+        'submodulos' => []
+    ],
+    [
+        'nombre' => 'Pedidos',
+        'url' => '/Sistema_Premoldeado/views/pages/pedidos/listado_pedidos.php',
+        'icono' => 'fas fa-shopping-cart',
+        'submodulos' => []
+    ],
+    [
+        'nombre' => 'Ventas',
+        'url' => '/Sistema_Premoldeado/views/pages/ventas/listado_ventas.php',
+        'icono' => 'fas fa-cash-register',
+        'submodulos' => []
+    ],
+    [
+        'nombre' => 'Usuarios',
+        'url' => '/Sistema_Premoldeado/views/pages/usuarios/listado_usuarios.php',
+        'icono' => 'fas fa-users',
+        'submodulos' => []
+    ],
+    [
+        'nombre' => 'Perfiles',
+        'url' => '/Sistema_Premoldeado/views/pages/usuarios/perfiles/listado_perfiles.php',
+        'icono' => 'fas fa-user-shield',
+        'submodulos' => []
+    ]
+];
 ?>
 
 <!-- Menú Simple con Bootstrap -->

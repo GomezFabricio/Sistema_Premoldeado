@@ -38,6 +38,8 @@ $perfil_nombre = $_SESSION['perfil_nombre'] ?? 'Sin perfil';
     <!-- Estilos personalizados -->
     <link href="/Sistema_Premoldeado/assets/css/style.css" rel="stylesheet">
     
+    <!-- jQuery (requerido por DataTables) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- JavaScript (carga al final del head para mejor rendimiento) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
@@ -47,6 +49,23 @@ $perfil_nombre = $_SESSION['perfil_nombre'] ?? 'Sin perfil';
 <body class="d-flex flex-column min-vh-100">
     <!-- Header Principal -->
     <header class="main-header">
+        <!-- Menú móvil toggle -->
+        <button id="navToggle" class="btn btn-outline-primary d-md-none" aria-label="Abrir menú">
+            <i class="fas fa-bars"></i>
+        </button>
+        <!-- Menú móvil -->
+        <nav id="navMenu" class="nav-menu d-md-none">
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link" href="/Sistema_Premoldeado/index.php">Inicio</a></li>
+                <li class="nav-item"><a class="nav-link" href="/Sistema_Premoldeado/views/pages/productos/listado_productos.php">Productos</a></li>
+                <li class="nav-item"><a class="nav-link" href="/Sistema_Premoldeado/views/pages/materiales/listado_materiales.php">Materiales</a></li>
+                <li class="nav-item"><a class="nav-link" href="/Sistema_Premoldeado/views/pages/usuarios/listado_usuarios.php">Usuarios</a></li>
+                <li class="nav-item"><a class="nav-link" href="/Sistema_Premoldeado/views/pages/personas/listado_personas.php">Personas</a></li>
+                <li class="nav-item"><a class="nav-link" href="/Sistema_Premoldeado/views/pages/pedidos/listado_pedidos.php">Pedidos</a></li>
+                <li class="nav-item"><a class="nav-link" href="/Sistema_Premoldeado/views/pages/ventas/listado_ventas.php">Ventas</a></li>
+                <li class="nav-item"><a class="nav-link" href="/Sistema_Premoldeado/views/pages/proveedores/listado_proveedores.php">Proveedores</a></li>
+            </ul>
+        </nav>
         <!-- Top Bar -->
         <div class="top-bar">
             <div class="container-fluid">
@@ -114,8 +133,6 @@ $perfil_nombre = $_SESSION['perfil_nombre'] ?? 'Sin perfil';
             </div>
         </div>
     </header>
-    
-    <!-- Contenido Principal -->
-    <main class="main-content">
-        <div class="container-fluid">
-            <div class="content-wrapper">
+
+
+

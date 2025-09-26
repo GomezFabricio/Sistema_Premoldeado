@@ -1,10 +1,12 @@
 <?php
 /**
- * Componente de tabla reutilizable con DataTables
+ * Componente de tabla reutilizable con DataTables + Excel Export
  * 
  * Parámetros principales:
  * $data - Array de datos desde el controlador
  * $config - Array de configuración de la tabla
+ * 
+ * ✨ NUEVA FUNCIONALIDAD: Export Excel integrado
  * 
  * Estructura del array $config:
  * [
@@ -28,7 +30,7 @@
  *             [
  *                 'label' => 'Acción',
  *                 'icon' => 'fas fa-icon',
- *                 'class' => 'btn-success',
+ *                 'variant' => 'success|primary|danger|warning|info|secondary',
  *                 'onclick' => 'functionName({id})',
  *                 'condition' => 'field == value'
  *             ]
@@ -126,6 +128,7 @@ if (empty($config['columns']) && !empty($data)) {
 /**
  * Función para formatear valores según tipo
  */
+if (!function_exists('formatCellValue')) {
 function formatCellValue($value, $type, $formatter = null, $row = []) {
     // Si hay un formatter personalizado, usarlo
     if ($formatter && is_callable($formatter)) {
@@ -170,26 +173,30 @@ function formatCellValue($value, $type, $formatter = null, $row = []) {
             return htmlspecialchars((string)$value);
     }
 }
+}
 
 /**
  * Función para evaluar condiciones
  */
+if (!function_exists('evaluateActionCondition')) {
 function evaluateActionCondition($condition, $row) {
     if (empty($condition)) return true;
-    
-    // Reemplazar variables de la fila en la condición
+    // Si la condición es una función anónima (Closure), ejecutarla directamente
+    if ($condition instanceof Closure) {
+        return $condition($row);
+    }
+    // Si es una cadena, reemplazar variables y evaluar
     $evaluateCondition = $condition;
     foreach ($row as $key => $value) {
         $evaluateCondition = str_replace($key, var_export($value, true), $evaluateCondition);
     }
-    
-    // Evaluar condición de forma segura
     try {
         return eval("return $evaluateCondition;");
     } catch (Exception $e) {
         error_log("Error evaluando condición: " . $e->getMessage());
         return false;
     }
+}
 }
 
 /**
@@ -409,19 +416,41 @@ $(document).ready(function() {
     $('#<?php echo $tableId; ?>').DataTable(tableConfig);
 });
 
-// Funciones globales para acciones (pueden ser sobrescritas)
-if (typeof editRecord !== 'function') {
-    function editRecord(id) {
-        console.log('Editar registro:', id);
-        // Implementar en la página que usa el componente
-    }
+// ✨ FUNCIONES DE EXPORT EXCEL
+function exportarExcel() {
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('action', 'export');
+    currentUrl.searchParams.set('format', 'excel');
+    window.location.href = currentUrl.toString();
 }
 
-if (typeof deleteRecord !== 'function') {
-    function deleteRecord(id) {
-        console.log('Eliminar registro:', id);
-        // Implementar en la página que usa el componente
-    }
+function exportarCSV() {
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('action', 'export');
+    currentUrl.searchParams.set('format', 'csv');
+    window.location.href = currentUrl.toString();
 }
+
+function generarReporte() {
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('action', 'export');
+    currentUrl.searchParams.set('format', 'report');
+    window.open(currentUrl.toString(), '_blank');
+}
+
+// Funciones globales para acciones (pueden ser sobrescritas)
+if (typeof editRecord !== 'function') {
+// Las funciones editRecord y deleteRecord deben ser implementadas en la vista que usa el componente.
 </script>
+
+<?php
+// ✨ AUTO-HANDLE EXPORT REQUESTS
+// Si se solicita export, procesarlo automáticamente
+if (isset($_GET['action']) && $_GET['action'] === 'export' && !empty($data)) {
+    require_once __DIR__ . '/../../config/ExcelExporter.php';
+    
+    $moduleName = $config['title'] ?? 'datos';
+    handleExportRequest($data, $config, $moduleName);
+}
+?>
 <?php endif; ?>

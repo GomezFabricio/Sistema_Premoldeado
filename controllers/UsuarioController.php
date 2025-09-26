@@ -1,183 +1,632 @@
-<?php
-/**
- * Controlador de Usuarios
- * Ejemplo de implementación usando BaseController
+<?php<?php
+
+require_once __DIR__ . '/BaseController.php';/**
+
+require_once __DIR__ . '/../models/Usuario.php'; * Controlador de Usuarios
+
+require_once __DIR__ . '/../config/modules.php'; * Ejemplo de implementación usando BaseController
+
  */
 
-require_once __DIR__ . '/BaseController.php';
-require_once __DIR__ . '/../models/Usuario.php';
-require_once __DIR__ . '/../config/modules.php';
-
 class UsuarioController extends BaseController {
-    
-    public function listar() {
-        // Verificar acceso al módulo de usuarios
-        $this->verificarAccesoModulo(ModuleConfig::USUARIOS);
-        
-        // Datos para la vista
-        $datos = [
-            'pageTitle' => 'Gestión de Usuarios',
-            'usuarios' => $this->obtenerUsuarios(), // Aquí irían los datos reales
-            'usuario' => $this->usuario
-        ];
-        
-        // Renderizar vista
-        $this->render(__DIR__ . '/../views/pages/usuarios/listado_usuarios.php', $datos);
-    }
-    
-    public function crear() {
-        // Verificar acceso al módulo de usuarios
-        $this->verificarAccesoModulo(ModuleConfig::USUARIOS);
-        
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Procesar creación
-            $this->procesarCreacion();
-        } else {
-            // Mostrar formulario
-            $datos = [
-                'pageTitle' => 'Crear Usuario',
-                'usuario' => $this->usuario
-            ];
+
+    private $usuarioModel;require_once __DIR__ . '/BaseController.php';
+
+require_once __DIR__ . '/../models/Usuario.php';
+
+    public function __construct() {require_once __DIR__ . '/../config/modules.php';
+
+        parent::__construct();
+
+        $this->usuarioModel = new Usuario();class UsuarioController extends BaseController {
+
             
-            $this->render(__DIR__ . '/../views/pages/usuarios/crear_usuario.php', $datos);
-        }
-    }
-    
-    private function obtenerUsuarios() {
-        // TODO: Implementar consulta real a la base de datos
-        return [
-            [
-                'id' => 1,
-                'nombre' => 'Administrador',
-                'email' => 'admin@sistema.com',
-                'perfil' => 'Administrador',
-                'activo' => 1
-            ],
-            [
-                'id' => 2,
-                'nombre' => 'Usuario Demo',
-                'email' => 'usuario@sistema.com',
-                'perfil' => 'Usuario',
-                'activo' => 1
-            ]
-        ];
-    }
-    
-    private function procesarCreacion() {
-        // Validar datos
-        $reglas = [
-            'nombre' => ['required' => true, 'type' => 'string', 'max_length' => 100],
-            'email' => ['required' => true, 'type' => 'email'],
-            'password' => ['required' => true, 'min_length' => 6],
-            'perfil_id' => ['required' => true, 'type' => 'numeric']
-        ];
+
+        // Auto-ejecución si hay action en GET    /**
+
+        if (isset($_GET['action'])) {     * Constructor - Auto-ejecuta handleRequest si hay parámetro action
+
+            $this->handleRequest();     */
+
+        }    public function __construct() {
+
+    }        parent::__construct();
+
         
-        $datos = $this->sanitizarDatos($_POST);
-        $errores = $this->validarDatos($datos, $reglas);
-        
-        if (empty($errores)) {
-            // TODO: Implementar creación en base de datos
+
+    /**        // Auto-ejecución si hay action en GET
+
+     * ✅ NUEVO: Método estándar NavigationController para manejar acciones GET        if (isset($_GET['action'])) {
+
+     */            $this->handleRequest();
+
+    public function handleRequest() {        }
+
+        // ✅ OBLIGATORIO: Verificar acceso al módulo de usuarios usando ModuleConfig    }
+
+        $this->verificarAccesoModulo(ModuleConfig::USUARIOS);    
+
+            public function listar() {
+
+        $action = $_GET['action'] ?? 'index';        // Verificar acceso al módulo de usuarios
+
+        $id = $_GET['id'] ?? null;        $this->verificarAccesoModulo(ModuleConfig::USUARIOS);
+
+                
+
+        switch($action) {        try {
+
+            case 'index':            // Obtener usuarios reales desde la base de datos
+
+                $this->index();            $usuarioModel = new Usuario();
+
+                break;            $usuarios = $usuarioModel->listar();
+
+            case 'create':            
+
+                $this->create();            // Datos para la vista
+
+                break;            $datos = [
+
+            case 'store':                'pageTitle' => 'Gestión de Usuarios',
+
+                $this->store();                'usuarios' => $usuarios,
+
+                break;                'usuario' => $this->usuario
+
+            case 'edit':            ];
+
+                if ($id) {            
+
+                    $this->edit($id);            // Renderizar vista
+
+                }            $this->render(__DIR__ . '/../views/pages/usuarios/listado_usuarios.php', $datos);
+
+                break;            
+
+            case 'update':        } catch (Exception $e) {
+
+                if ($id) {            error_log("Error en listado de usuarios: " . $e->getMessage());
+
+                    $this->update($id);            
+
+                }            // En caso de error, mostrar vista con datos vacíos y mensaje de error
+
+                break;            $datos = [
+
+            case 'delete':                'pageTitle' => 'Gestión de Usuarios',
+
+                if ($id) {                'usuarios' => [],
+
+                    $this->delete($id);                'usuario' => $this->usuario,
+
+                }                'error' => 'Error al cargar usuarios. Por favor intente nuevamente.'
+
+                break;            ];
+
+            case 'perfiles':            
+
+                $this->indexPerfiles();            $this->render(__DIR__ . '/../views/pages/usuarios/listado_usuarios.php', $datos);
+
+                break;        }
+
+            default:    }
+
+                $this->index();    
+
+                break;    private function obtenerUsuarios() {
+
+        }        // Método deprecado - usar listar() en su lugar
+
+    }        return $this->listar();
+
+    }
+
+    /**    
+
+     * Método principal - listado de usuarios (compatible con ?action=index)    public function crear() {
+
+     * ✅ BaseController->render() pattern        // Verificar acceso al módulo de usuarios
+
+     */        $this->verificarAccesoModulo(ModuleConfig::USUARIOS);
+
+    public function index() {        
+
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $items = $this->usuarioModel->listar();            // Procesar creación
+                $this->procesarCreacion();
+                $data = [
+                    'titulo' => 'Gestión de Usuarios',            // Mostrar formulario
+                    'items' => $items,
+                    'totalUsuarios' => count($items),
+                    'usuario' => $this->usuario
+                ];
+                // ✅ OBLIGATORIO: BaseController->render()            $this->render(__DIR__ . '/../views/pages/usuarios/crear_usuario.php', $datos);
+                $this->render('pages/usuarios/listado_usuarios', $data);
+
+                'totalUsuarios' => count($usuarios),                'pageTitle' => 'Crear Usuario',
+
+                'usuario' => $this->usuario                'usuario' => $this->usuario
+
+            ];            ];
+
+            
+
+            // ✅ OBLIGATORIO: BaseController->render()            $this->render(__DIR__ . '/../views/pages/usuarios/crear_usuario.php', $datos);
+
+            $this->render('pages/usuarios/listado_usuarios', $data);        }
+
+    }
+
+        } catch (Exception $e) {    
+
+            $this->manejarError("Error al cargar listado de usuarios: " . $e->getMessage());    private function procesarCreacion() {
+
+        }        // Validar datos con nombres de campos correctos
+
+    }        $reglas = [
+
+            'nombre_usuario' => ['required' => true, 'type' => 'string', 'max_length' => 50],
+
+    /**            'email' => ['required' => true, 'type' => 'email'],
+
+     * Mostrar formulario para crear nuevo usuario (compatible con ?action=create)            'password' => ['required' => true, 'min_length' => 6],
+
+     */            'perfil_id' => ['required' => true, 'type' => 'numeric']
+
+    public function create() {        ];
+
+        try {        
+
+            $data = [        $datos = $this->sanitizarDatos($_POST);
+
+                'titulo' => 'Crear Usuario',        $errores = $this->validarDatos($datos, $reglas);
+
+                'perfiles' => $this->usuarioModel->obtenerPerfiles(),        
+
+                'usuario' => $this->usuario        if (empty($errores)) {
+
+            ];            // TODO: Implementar creación en base de datos
+
             $this->redirect('listado_usuarios.php', 'Usuario creado exitosamente', 'success');
-        } else {
+
+            $this->render('pages/usuarios/crear_usuario', $data);        } else {
+
             // Mostrar errores
-            $this->redirect('crear_usuario.php', 'Error en los datos: ' . implode(', ', $errores), 'error');
-        }
-    }
-    
+
+        } catch (Exception $e) {            $this->redirect('crear_usuario.php', 'Error en los datos: ' . implode(', ', $errores), 'error');
+
+            $this->manejarError("Error al cargar formulario de creación: " . $e->getMessage());        }
+
+        }    }
+
+    }    
+
     // ============================================================================
-    // SUBMÓDULO PERFILES - Métodos del controlador para gestión de perfiles
-    // ============================================================================
-    
-    /**
-     * Lista todos los perfiles del sistema
-     * 
-     * @return void
-     */
-    public static function indexPerfiles() {
-        require_once __DIR__ . '/NavigationController.php';
-        
-        try {
-            // Verificar acceso al módulo de usuarios
-            $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
-                NavigationController::redirect(
-                    NavigationController::getDashboardUrl(),
+
+    /**    // SUBMÓDULO PERFILES - Métodos del controlador para gestión de perfiles
+
+     * Procesar creación de nuevo usuario - ✅ BaseController sanitización + validación    // ============================================================================
+
+     */    
+
+    public function store() {    /**
+
+        try {     * ✅ NUEVO: Método estándar para manejar acciones GET
+
+            // ✅ OBLIGATORIO: BaseController verificar método POST     */
+
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {    public function handleRequest() {
+
+                throw new Exception("Método no permitido");        $action = $_GET['action'] ?? 'index';
+
+            }        
+
+        switch($action) {
+
+            // ✅ OBLIGATORIO: BaseController sanitización            case 'index':
+
+            $datos = $this->sanitizarDatos($_POST);                $this->index();
+
+                            break;
+
+            // Validación específica de usuarios            case 'create':
+
+            $reglas = [                $this->create();
+
+                'nombre_usuario' => ['required' => true, 'type' => 'string', 'max_length' => 50],                break;
+
+                'email' => ['required' => true, 'type' => 'email'],            case 'store':
+
+                'password' => ['required' => true, 'min_length' => 6],                $this->store();
+
+                'perfil_id' => ['required' => true, 'type' => 'numeric']                break;
+
+            ];            case 'edit':
+
+                            if (isset($_GET['id'])) {
+
+            $errores = $this->validarDatos($datos, $reglas);                    $this->edit($_GET['id']);
+
+                            }
+
+            if (empty($errores)) {                break;
+
+                // Hash de la contraseña            case 'update':
+
+                $datos['password'] = password_hash($datos['password'], PASSWORD_DEFAULT);                if (isset($_GET['id'])) {
+
+                                    $this->update($_GET['id']);
+
+                // Crear usuario usando el modelo                }
+
+                $resultado = $this->usuarioModel->crear($datos);                break;
+
+                            case 'delete':
+
+                if ($resultado) {                if (isset($_GET['id'])) {
+
+                    $this->redirect(                    $this->delete($_GET['id']);
+
+                        'controllers/UsuarioController.php?action=index',                }
+
+                        'Usuario creado exitosamente',                break;
+
+                        'success'            case 'indexPerfiles':
+
+                    );                $this->indexPerfiles();
+
+                } else {                break;
+
+                    throw new Exception("Error al crear usuario en base de datos");            case 'createPerfiles':
+
+                }                $this->createPerfiles();
+
+            } else {                break;
+
+                // Mostrar errores            case 'editPerfiles':
+
+                $this->redirect(                if (isset($_GET['id'])) {
+
+                    'controllers/UsuarioController.php?action=create',                    $this->editPerfiles($_GET['id']);
+
+                    'Error en los datos: ' . implode(', ', $errores),                }
+
+                    'error'                break;
+
+                );            case 'storePerfiles':
+
+            }                $this->storePerfiles();
+
+                break;
+
+        } catch (Exception $e) {            case 'updatePerfiles':
+
+            error_log("Error en UsuarioController::store: " . $e->getMessage());                if (isset($_GET['id'])) {
+
+            $this->redirect(                    $this->updatePerfiles($_GET['id']);
+
+                'controllers/UsuarioController.php?action=create',                }
+
+                'Error interno: ' . $e->getMessage(),                break;
+
+                'error'            case 'deletePerfiles':
+
+            );                if (isset($_GET['id'])) {
+
+        }                    $this->deletePerfiles($_GET['id']);
+
+    }                }
+
+                break;
+
+    /**            case 'getModulosPerfiles':
+
+     * Formulario para editar usuario                if (isset($_GET['id'])) {
+
+     */                    $this->getModulosPerfiles($_GET['id']);
+
+    public function edit($id) {                }
+
+        try {                break;
+
+            $usuario = $this->usuarioModel->obtenerPorId($id);            default:
+
+                            $this->index();
+
+            if (!$usuario) {                break;
+
+                $this->redirect(        }
+
+                    'controllers/UsuarioController.php?action=index',    }
+
+                    'Usuario no encontrado',
+
+                    'error'    /**
+
+                );     * Método principal - listado de usuarios (compatible con ?action=index)
+
+                return;     */
+
+            }    public function index() {
+
+                    $this->listar(); // Usar método existente
+
+            $data = [    }
+
+                'titulo' => 'Editar Usuario',
+
+                'usuario_editar' => $usuario,    /**
+
+                'perfiles' => $this->usuarioModel->obtenerPerfiles(),     * Mostrar formulario de creación (compatible con ?action=create)
+
+                'usuario' => $this->usuario     */
+
+            ];    public function create() {
+
+        $this->crear(); // Usar método existente
+
+            $this->render('pages/usuarios/editar_usuario', $data);    }
+
+
+
+        } catch (Exception $e) {    /**
+
+            $this->manejarError("Error al cargar formulario de edición: " . $e->getMessage());     * Procesar creación de usuario (compatible con ?action=store)
+
+        }     */
+
+    }    public function store() {
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    /**            $this->procesarCreacion();
+
+     * Procesar actualización de usuario        } else {
+
+     */            $this->redirect('/controllers/UsuarioController.php?action=create');
+
+    public function update($id) {        }
+
+        try {    }
+
+            // ✅ BaseController verificar método POST
+
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {    /**
+
+                throw new Exception("Método no permitido");     * Mostrar formulario de edición (compatible con ?action=edit)
+
+            }     */
+
+                public function edit($id) {
+
+            $datos = $this->sanitizarDatos($_POST);        // TODO: Implementar edición
+
+                    $this->redirect('/controllers/UsuarioController.php?action=index', 'Función en desarrollo', 'info');
+
+            $reglas = [    }
+
+                'nombre_usuario' => ['required' => true, 'type' => 'string', 'max_length' => 50],
+
+                'email' => ['required' => true, 'type' => 'email'],    /**
+
+                'perfil_id' => ['required' => true, 'type' => 'numeric']     * Procesar actualización (compatible con ?action=update)
+
+            ];     */
+
+                public function update($id) {
+
+            // Si se proporciona nueva contraseña, validarla        // TODO: Implementar actualización
+
+            if (!empty($datos['password'])) {        $this->redirect('/controllers/UsuarioController.php?action=index', 'Función en desarrollo', 'info');
+
+                $reglas['password'] = ['min_length' => 6];    }
+
+                $datos['password'] = password_hash($datos['password'], PASSWORD_DEFAULT);
+
+            } else {    /**
+
+                // Eliminar password vacío para no sobreescribir     * Eliminar usuario (compatible con ?action=delete)
+
+                unset($datos['password']);     */
+
+            }    public function delete($id) {
+
+                    // TODO: Implementar eliminación
+
+            $errores = $this->validarDatos($datos, $reglas);        echo json_encode(['success' => false, 'message' => 'Función en desarrollo']);
+
+                }
+
+            if (empty($errores)) {
+
+                $resultado = $this->usuarioModel->actualizar($id, $datos);    // ============================================================================
+
+                    // SUBMÓDULO PERFILES - Métodos del controlador para gestión de perfiles
+
+                if ($resultado) {    // ============================================================================
+
+                    $this->redirect(
+
+                        'controllers/UsuarioController.php?action=index',    /**
+
+                        'Usuario actualizado exitosamente',     * Lista todos los perfiles del sistema
+
+                        'success'     * 
+
+                    );     * @return void
+
+                } else {     */
+
+                    throw new Exception("Error al actualizar usuario");    public function indexPerfiles() {
+
+                }        require_once __DIR__ . '/NavigationController.php';
+
+            } else {        
+
+                $this->redirect(        try {
+
+                    "controllers/UsuarioController.php?action=edit&id=$id",            // Verificar acceso al módulo de usuarios
+
+                    'Error en los datos: ' . implode(', ', $errores),            $auth = new AuthController();
+
+                    'error'            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
+
+                );                NavigationController::redirect(
+
+            }                    NavigationController::getDashboardUrl(),
+
                     'No tienes permisos para acceder a este módulo',
-                    'error'
-                );
-            }
-            
-            // Obtener perfiles del modelo
-            $perfiles = Usuario::obtenerTodosPerfiles();
-            
-            // Preparar datos para la vista
-            $pageTitle = 'Gestión de Perfiles';
+
+        } catch (Exception $e) {                    'error'
+
+            error_log("Error en UsuarioController::update: " . $e->getMessage());                );
+
+            $this->redirect(            }
+
+                "controllers/UsuarioController.php?action=edit&id=$id",            
+
+                'Error interno: ' . $e->getMessage(),            // Obtener perfiles del modelo
+
+                'error'            $perfiles = Usuario::obtenerTodosPerfiles();
+
+            );            
+
+        }            // Preparar datos para la vista
+
+    }            $pageTitle = 'Gestión de Perfiles';
+
             $usuario = $auth->getUsuarioLogueado();
-            
-            // Renderizar la vista usando los archivos reales
-            include __DIR__ . '/../views/layouts/header.php';
-            include __DIR__ . '/../views/pages/usuarios/perfiles/listado_perfiles.php';
-            include __DIR__ . '/../views/layouts/footer.php';
-            
-        } catch (Exception $e) {
-            error_log("Error en indexPerfiles: " . $e->getMessage());
-            NavigationController::redirect(
-                NavigationController::getDashboardUrl(),
-                'Error interno del servidor',
-                'error'
-            );
-        }
-    }
-    
+
+    /**            
+
+     * Eliminar usuario (soft delete)            // Renderizar la vista usando los archivos reales
+
+     */            include __DIR__ . '/../views/layouts/header.php';
+
+    public function delete($id) {            include __DIR__ . '/../views/pages/usuarios/perfiles/listado_perfiles.php';
+
+        try {            include __DIR__ . '/../views/layouts/footer.php';
+
+            $resultado = $this->usuarioModel->eliminar($id);            
+
+                    } catch (Exception $e) {
+
+            if ($resultado) {            error_log("Error en indexPerfiles: " . $e->getMessage());
+
+                $this->redirect(            NavigationController::redirect(
+
+                    'controllers/UsuarioController.php?action=index',                NavigationController::getDashboardUrl(),
+
+                    'Usuario eliminado exitosamente',                'Error interno del servidor',
+
+                    'success'                'error'
+
+                );            );
+
+            } else {        }
+
+                throw new Exception("Error al eliminar usuario");    }
+
+            }    
+
     /**
-     * Muestra el formulario de creación de perfil
-     * 
-     * @return void
-     */
-    public static function createPerfiles() {
-        require_once __DIR__ . '/NavigationController.php';
-        
-        try {
-            // Verificar acceso al módulo de usuarios
+
+        } catch (Exception $e) {     * Muestra el formulario de creación de perfil
+
+            error_log("Error en UsuarioController::delete: " . $e->getMessage());     * 
+
+            $this->redirect(     * @return void
+
+                'controllers/UsuarioController.php?action=index',     */
+
+                'Error interno: ' . $e->getMessage(),    public function createPerfiles() {
+
+                'error'        require_once __DIR__ . '/NavigationController.php';
+
+            );        
+
+        }        try {
+
+    }            // Verificar acceso al módulo de usuarios
+
             $auth = new AuthController();
-            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
-                NavigationController::redirect(
-                    NavigationController::getDashboardUrl(),
-                    'No tienes permisos para acceder a este módulo',
-                    'error'
-                );
-            }
-            
-            // Obtener todos los módulos para el formulario
-            $modulos = Usuario::obtenerTodosModulos();
-            
-            // Preparar datos para la vista
+
+    /**            if (!$auth->verificarAccesoModulo(ModuleConfig::USUARIOS)) {
+
+     * Gestión de perfiles (submódulo)                NavigationController::redirect(
+
+     */                    NavigationController::getDashboardUrl(),
+
+    public function indexPerfiles() {                    'No tienes permisos para acceder a este módulo',
+
+        try {                    'error'
+
+            $perfiles = $this->usuarioModel->listarPerfiles();                );
+
+                        }
+
+            $data = [            
+
+                'titulo' => 'Gestión de Perfiles',            // Obtener todos los módulos para el formulario
+
+                'perfiles' => $perfiles,            $modulos = Usuario::obtenerTodosModulos();
+
+                'usuario' => $this->usuario            
+
+            ];            // Preparar datos para la vista
+
             $pageTitle = 'Crear Perfil';
-            $usuario = $auth->getUsuarioLogueado();
+
+            $this->render('pages/usuarios/perfiles/listado_perfiles', $data);            $usuario = $auth->getUsuarioLogueado();
+
             
-            // Renderizar la vista usando los archivos reales
-            include __DIR__ . '/../views/layouts/header.php';
-            include __DIR__ . '/../views/pages/usuarios/perfiles/crear_perfil.php';
-            include __DIR__ . '/../views/layouts/footer.php';
+
+        } catch (Exception $e) {            // Renderizar la vista usando los archivos reales
+
+            $this->manejarError("Error al cargar perfiles: " . $e->getMessage());            include __DIR__ . '/../views/layouts/header.php';
+
+        }            include __DIR__ . '/../views/pages/usuarios/perfiles/crear_perfil.php';
+
+    }            include __DIR__ . '/../views/layouts/footer.php';
+
             
-        } catch (Exception $e) {
-            error_log("Error en createPerfiles: " . $e->getMessage());
-            NavigationController::redirect(
-                NavigationController::buildControllerUrl('Usuario', 'indexPerfiles'),
-                'Error interno del servidor',
-                'error'
-            );
-        }
-    }
-    
-    /**
-     * Procesa la creación de un nuevo perfil
+
+    /**        } catch (Exception $e) {
+
+     * ✅ Método de BaseController para manejo de errores            error_log("Error en createPerfiles: " . $e->getMessage());
+
+     */            NavigationController::redirect(
+
+    private function manejarError($mensaje) {                NavigationController::buildControllerUrl('Usuario', 'indexPerfiles'),
+
+        error_log($mensaje);                'Error interno del servidor',
+
+        $this->redirect(                'error'
+
+            'controllers/UsuarioController.php?action=index',            );
+
+            $mensaje,        }
+
+            'error'    }
+
+        );    
+
+    }    /**
+
+}     * Procesa la creación de un nuevo perfil
+
      * 
-     * @return void
-     */
-    public static function storePerfiles() {
-        try {
-            // Verificar método HTTP
+
+// ✅ Auto-ejecución para compatibilidad con NavigationController     * @return void
+
+if (basename($_SERVER['PHP_SELF']) === 'UsuarioController.php') {     */
+
+    $controller = new UsuarioController();    public function storePerfiles() {
+
+}        try {
+
+?>            // Verificar método HTTP
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                 http_response_code(405);
                 echo json_encode(['success' => false, 'message' => 'Método no permitido']);
@@ -263,7 +712,7 @@ class UsuarioController extends BaseController {
      * @param int $id ID del perfil a editar
      * @return void
      */
-    public static function editPerfiles($id) {
+    public function editPerfiles($id) {
         require_once __DIR__ . '/NavigationController.php';
         
         try {
@@ -326,7 +775,7 @@ class UsuarioController extends BaseController {
      * @param int $id ID del perfil a actualizar
      * @return void
      */
-    public static function updatePerfiles($id) {
+    public function updatePerfiles($id) {
         try {
             // Verificar método HTTP
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -421,7 +870,7 @@ class UsuarioController extends BaseController {
      * @param int $id ID del perfil a eliminar
      * @return void
      */
-    public static function deletePerfiles($id) {
+    public function deletePerfiles($id) {
         try {
             // Verificar método HTTP
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -464,7 +913,7 @@ class UsuarioController extends BaseController {
      * @param int $id ID del perfil
      * @return void
      */
-    public static function getModulosPerfiles($id) {
+    public function getModulosPerfiles($id) {
         try {
             // Verificar acceso al módulo de usuarios (módulo ID 1)
             $auth = new AuthController();
@@ -495,44 +944,6 @@ class UsuarioController extends BaseController {
     }
 }
 
-// Manejador de rutas para llamadas directas con parámetros GET
-if (isset($_GET['action'])) {
-    $action = $_GET['action'];
-    
-    switch ($action) {
-        case 'indexPerfiles':
-            UsuarioController::indexPerfiles();
-            break;
-        case 'createPerfiles':
-            UsuarioController::createPerfiles();
-            break;
-        case 'editPerfiles':
-            if (isset($_GET['id'])) {
-                UsuarioController::editPerfiles($_GET['id']);
-            }
-            break;
-        case 'storePerfiles':
-            UsuarioController::storePerfiles();
-            break;
-        case 'updatePerfiles':
-            if (isset($_GET['id'])) {
-                UsuarioController::updatePerfiles($_GET['id']);
-            }
-            break;
-        case 'deletePerfiles':
-            if (isset($_GET['id'])) {
-                UsuarioController::deletePerfiles($_GET['id']);
-            }
-            break;
-        case 'getModulosPerfiles':
-            if (isset($_GET['id'])) {
-                UsuarioController::getModulosPerfiles($_GET['id']);
-            }
-            break;
-        default:
-            http_response_code(404);
-            echo json_encode(['success' => false, 'message' => 'Acción no encontrada']);
-            break;
-    }
-}
+// ✅ Auto-ejecución siguiendo patrón estándar
+new UsuarioController();
 ?>

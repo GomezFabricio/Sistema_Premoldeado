@@ -20,8 +20,8 @@ include_once '../../../layouts/header.php';
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="nombre_usuarios" class="form-label">Nombre de Usuario</label>
-                            <input type="text" class="form-control" id="nombre_usuarios" name="nombre_usuarios" value="" required>
+                            <label for="nombre_usuario" class="form-label">Nombre de Usuario</label>
+                            <input type="text" class="form-control" id="nombre_usuario" name="nombre_usuario" value="" required>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -39,8 +39,8 @@ include_once '../../../layouts/header.php';
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="perfiles_id" class="form-label">Perfil</label>
-                            <select class="form-select" id="perfiles_id" name="perfiles_id" required>
+                            <label for="perfil_id" class="form-label">Perfil</label>
+                            <select class="form-select" id="perfil_id" name="perfil_id" required>
                                 <option value="">Seleccionar perfil...</option>
                                 <!-- TODO: Cargar desde base de datos -->
                                 <option value="1">Administrador</option>

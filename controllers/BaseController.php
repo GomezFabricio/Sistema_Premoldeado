@@ -55,6 +55,9 @@ class BaseController {
         // Hacer disponibles los datos en la vista
         extract($datos);
         
+        // También crear la variable $data para compatibilidad con vistas que la esperan
+        $data = $datos;
+        
         // Datos del usuario siempre disponibles
         $usuario_nombre = $this->usuario['nombre'] ?? 'Usuario';
         $perfil_nombre = $this->usuario['perfil_nombre'] ?? 'Sin perfil';
@@ -100,6 +103,16 @@ class BaseController {
         return null;
     }
     
+    /**
+     * Establecer mensaje flash en la sesión
+     */
+    protected function establecerMensaje($mensaje, $tipo = 'info') {
+        $_SESSION['flash_message'] = [
+            'message' => $mensaje,
+            'type' => $tipo
+        ];
+    }
+
     /**
      * Validar datos de entrada
      */
