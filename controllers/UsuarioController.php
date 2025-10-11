@@ -373,6 +373,10 @@ class UsuarioController extends BaseController {
             
             $modulos = $_POST['modulos'] ?? [];
             
+            // Debug: Log para verificar qué datos llegan
+            error_log("DEBUG - Crear Perfil: Nombre = " . $datos['nombre']);
+            error_log("DEBUG - Crear Perfil: Módulos recibidos = " . print_r($modulos, true));
+            
             // Validaciones
             if (empty($datos['nombre'])) {
                 $this->establecerMensaje('El nombre del perfil es requerido', 'error');
@@ -384,9 +388,23 @@ class UsuarioController extends BaseController {
             $resultado = $this->usuarioModel->crearPerfil($datos);
             
             if ($resultado['success']) {
+                error_log("DEBUG - Perfil creado con ID: " . $resultado['id']);
+                
                 // Asignar módulos al perfil
                 if (!empty($modulos)) {
-                    $this->usuarioModel->asignarModulosAPerfil($resultado['perfil_id'], $modulos);
+                    error_log("DEBUG - Asignando " . count($modulos) . " módulos al perfil ID " . $resultado['id']);
+                    error_log("DEBUG - Módulos: " . print_r($modulos, true));
+                    
+                    $resultadoModulos = $this->usuarioModel->asignarModulosAPerfil($resultado['id'], $modulos);
+                    error_log("DEBUG - Resultado asignación módulos: " . print_r($resultadoModulos, true));
+                    
+                    if (!$resultadoModulos['success']) {
+                        $this->establecerMensaje('Perfil creado, pero error al asignar módulos: ' . $resultadoModulos['message'], 'error');
+                        $this->crearPerfil();
+                        return;
+                    }
+                } else {
+                    error_log("DEBUG - No hay módulos para asignar - array vacío o null");
                 }
                 
                 $this->redirectToController('Usuario', 'perfiles', [], 'Perfil creado exitosamente', 'success');

@@ -66,24 +66,31 @@
                     <div class="card-body">
                         <div class="table-responsive">
                             <!-- 
-                                IMPORTANTE: 
-                                - Agregar data-table-type con el tipo apropiado (usuarios, perfiles, clientes, etc.)
-                                - Los tipos disponibles están en assets/js/datatables-init.js
-                                - La inicialización es automática al agregar el data-table-type
+                                INSTRUCCIONES DE USO:
+                                1. Cambiar 'elementos_table' por '[modulo]_table' (ej: clientes_table, productos_table)
+                                2. Cambiar 'data-table-type' por el módulo correspondiente:
+                                   - usuarios, perfiles, clientes, productos, materiales, pedidos, ventas, proveedores, produccion
+                                   - O usar: simple (3-4 cols), extended (7+ cols), common (genérico)
+                                3. Ajustar el colspan en el mensaje "No hay elementos" según número de columnas
+                                4. Personalizar las columnas del thead según tus necesidades
+                                5. Ajustar el loop del tbody con los datos reales
                             -->
-                            <table class="table table-hover" id="elementos_table" data-table-type="usuarios">
+                            <table class="table table-hover" id="elementos_table" data-table-type="simple">
                                 <thead>
                                     <tr>
+                                        <!-- PERSONALIZAR ESTAS COLUMNAS SEGÚN TU MÓDULO -->
                                         <th class="text-center">ID</th>
                                         <th>Nombre</th>
                                         <th class="text-center">Estado</th>
                                         <th class="text-center">Fecha</th>
                                         <th class="text-center">Acciones</th>
+                                        <!-- FIN PERSONALIZACIÓN -->
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php if (empty($elementos)): ?>
                                         <tr>
+                                            <!-- AJUSTAR COLSPAN SEGÚN NÚMERO DE COLUMNAS -->
                                             <td colspan="5" class="text-center text-muted">
                                                 <i class="fas fa-inbox fa-2x mb-2"></i><br>
                                                 No hay elementos registrados
@@ -92,6 +99,7 @@
                                     <?php else: ?>
                                         <?php foreach ($elementos as $elemento): ?>
                                             <tr>
+                                                <!-- PERSONALIZAR ESTAS CELDAS SEGÚN TUS COLUMNAS -->
                                                 <td class="text-center">
                                                     <span class="badge bg-primary"><?= htmlspecialchars($elemento['id']) ?></span>
                                                 </td>
@@ -99,7 +107,7 @@
                                                     <strong><?= htmlspecialchars($elemento['nombre']) ?></strong>
                                                 </td>
                                                 <td class="text-center">
-                                                    <?php if ($elemento['activo']): ?>
+                                                    <?php if (($elemento['estado'] ?? $elemento['activo'] ?? 1) == 1): ?>
                                                         <span class="badge bg-success">
                                                             <i class="fas fa-check-circle me-1"></i>Activo
                                                         </span>
@@ -110,19 +118,23 @@
                                                     <?php endif; ?>
                                                 </td>
                                                 <td class="text-center">
-                                                    <?= htmlspecialchars($elemento['fecha'] ?? '-') ?>
+                                                    <?= htmlspecialchars($elemento['fecha'] ?? $elemento['fecha_creacion'] ?? '-') ?>
                                                 </td>
                                                 <td class="text-center">
                                                     <div class="btn-group" role="group">
-                                                        <a href="#" class="btn btn-sm btn-outline-primary" title="Editar">
+                                                        <!-- PERSONALIZAR ESTOS ENLACES SEGÚN TU CONTROLADOR -->
+                                                        <a href="/Sistema_Premoldeado/controllers/TuController.php?a=editar&id=<?= $elemento['id'] ?>" 
+                                                           class="btn btn-sm btn-outline-primary" title="Editar">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
-                                                        <a href="#" class="btn btn-sm btn-outline-danger" title="Eliminar"
+                                                        <a href="/Sistema_Premoldeado/controllers/TuController.php?a=eliminar&id=<?= $elemento['id'] ?>" 
+                                                           class="btn btn-sm btn-outline-danger" title="Eliminar"
                                                            onclick="return confirm('¿Estás seguro de eliminar este elemento?')">
                                                             <i class="fas fa-trash"></i>
                                                         </a>
                                                     </div>
                                                 </td>
+                                                <!-- FIN PERSONALIZACIÓN -->
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
@@ -153,3 +165,61 @@
     </script>
 </body>
 </html>
+
+<!--
+============================================================================
+                        GUÍA DE USO DEL TEMPLATE
+============================================================================
+
+PASOS PARA USAR ESTE TEMPLATE:
+
+1. COPIAR EL ARCHIVO
+   - Copia este archivo a tu carpeta de vistas
+   - Renómbralo según tu módulo (ej: listado_clientes.php)
+
+2. PERSONALIZAR VARIABLES
+   - Cambia $elementos por el nombre de tu array de datos
+   - Ajusta $titulo según tu módulo
+
+3. CONFIGURAR LA TABLA
+   - ID de tabla: Cambia 'elementos_table' por '[modulo]_table'
+   - data-table-type: Elige el tipo apropiado:
+     * Específicos: usuarios, perfiles, clientes, productos, materiales, pedidos, ventas, proveedores, produccion
+     * Genéricos: simple (3-4 cols), extended (7+ cols), common (básico)
+
+4. PERSONALIZAR COLUMNAS
+   - Ajusta las columnas del <thead> según tus necesidades
+   - Modifica las celdas del <tbody> con tus datos reales
+   - Actualiza el colspan en el mensaje "No hay elementos"
+
+5. CONFIGURAR ACCIONES
+   - Cambia los enlaces de los botones por tus controladores reales
+   - Ajusta los parámetros según tu lógica de negocio
+
+EJEMPLO PARA MÓDULO CLIENTES:
+-----------------------------
+- Archivo: listado_clientes.php
+- ID tabla: clientes_table  
+- data-table-type: clientes
+- Variable: $clientes
+- Controlador: ClienteController.php
+
+TIPOS DE DATA-TABLE DISPONIBLES:
+--------------------------------
+- usuarios: Para listado de usuarios (6 columnas típicas)
+- perfiles: Para listado de perfiles (5 columnas)
+- clientes: Para listado de clientes (6 columnas)
+- productos: Para listado de productos (6 columnas)
+- materiales: Para listado de materiales (6 columnas)
+- pedidos: Para listado de pedidos (7 columnas)
+- ventas: Para listado de ventas (7 columnas)
+- proveedores: Para listado de proveedores (6 columnas)
+- produccion: Para listado de producción (7 columnas)
+- simple: Para tablas simples (3-4 columnas)
+- extended: Para tablas extensas (7+ columnas)
+- common: Configuración genérica básica
+
+El sistema es completamente automático - solo necesitas agregar el data-table-type correcto.
+
+============================================================================
+-->

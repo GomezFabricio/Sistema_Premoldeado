@@ -70,7 +70,6 @@
                                         <th class="text-center">ID</th>
                                         <th>Nombre del Perfil</th>
                                         <th class="text-center">Estado</th>
-                                        <th class="text-center">Módulos</th>
                                         <th class="text-center">Usuarios</th>
                                         <th class="text-center">Acciones</th>
                                     </tr>
@@ -78,7 +77,7 @@
                 <tbody>
                     <?php if (empty($perfiles)): ?>
                         <tr>
-                            <td colspan="6" class="text-center text-muted">
+                            <td colspan="5" class="text-center text-muted">
                                 <i class="fas fa-user-shield fa-2x mb-2"></i><br>
                                 No hay perfiles registrados
                             </td>
@@ -108,31 +107,6 @@
                                             <i class="fas fa-times-circle me-1"></i>Inactivo
                                         </span>
                                     <?php endif; ?>
-                                </td>
-                                <td class="text-center">
-                                    <?php 
-                                    $totalModulos = intval($perfil['total_modulos'] ?? 0);
-                                    $modulosNombres = $perfil['modulos_nombres'] ?? [];
-                                    
-                                    if ($totalModulos > 0 && !empty($modulosNombres)) {
-                                        // Crear contenido del tooltip con viñetas
-                                        $tooltipItems = array_map(function($modulo) {
-                                            return '• ' . htmlspecialchars($modulo);
-                                        }, $modulosNombres);
-                                        $tooltipContent = '<strong>Módulos asignados:</strong><br>' . implode('<br>', $tooltipItems);
-                                    ?>
-                                        <span class="badge bg-info position-relative" 
-                                              data-bs-toggle="tooltip" 
-                                              data-bs-placement="top" 
-                                              data-bs-html="true"
-                                              data-bs-title="<?= htmlspecialchars($tooltipContent) ?>"
-                                              style="cursor: help;">
-                                            <?= $totalModulos ?> módulos
-                                            <i class="fas fa-info-circle ms-1 opacity-75" style="font-size: 0.8em;"></i>
-                                        </span>
-                                    <?php } else { ?>
-                                        <span class="badge bg-secondary">0 módulos</span>
-                                    <?php } ?>
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-secondary"><?= intval($perfil['total_usuarios'] ?? 0) ?> usuarios</span>

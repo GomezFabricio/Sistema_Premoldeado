@@ -122,10 +122,11 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="estado" class="form-label">Estado</label>
-                                    <select class="form-select" id="estado" name="estado">
+                                    <select class="form-select" id="estado" name="estado" disabled>
                                         <option value="1" <?= ($perfil['estado'] ?? 1) == 1 ? 'selected' : '' ?>>Activo</option>
                                         <option value="0" <?= ($perfil['estado'] ?? 1) == 0 ? 'selected' : '' ?>>Inactivo</option>
                                     </select>
+                                    <small class="form-text text-muted">El estado se controla desde el listado de perfiles</small>
                                 </div>
                             </div>
                         </div>

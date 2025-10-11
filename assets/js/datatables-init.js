@@ -1,6 +1,6 @@
 /**
  * DataTables Initialization - Sistema Premoldeado
- * Configuración común y funciones de inicialización para todas las tablas
+ * Sistema flexible para la inicialización automática de DataTables
  */
 
 // Configuración base para DataTables
@@ -30,74 +30,104 @@ const DataTablesConfig = {
     // Configuraciones específicas por tipo de tabla
     usuarios: {
         "order": [[0, "asc"]],
-        "columnDefs": [
-            { "targets": [0, 3, 4, 5], "className": "text-center" },
-            { "targets": [5], "orderable": false }
-        ]
+        // Auto-detecta columnas por clases CSS y posición
+        "autoColumnConfig": true,
+        "manualConfig": {
+            "centerColumns": [0, 3, 4, 5], // ID, Estado, Fecha, Acciones
+            "nonSortableColumns": [-1] // Última columna (acciones)
+        }
     },
 
     perfiles: {
         "order": [[0, "asc"]],
-        "columnDefs": [
-            { "targets": [0, 2, 3, 4, 5], "className": "text-center" },
-            { "targets": [5], "orderable": false }
-        ]
+        "autoColumnConfig": true,
+        "manualConfig": {
+            "centerColumns": [0, 2, 3, 4], // ID, Estado, Usuarios, Acciones
+            "nonSortableColumns": [-1] // Última columna (acciones)
+        }
     },
 
     clientes: {
         "order": [[1, "asc"]],
-        "columnDefs": [
-            { "targets": [0, 4, 5], "className": "text-center" },
-            { "targets": [5], "orderable": false }
-        ]
+        "autoColumnConfig": true,
+        "manualConfig": {
+            "centerColumns": [0, 4, 5], // ID, Estado, Acciones
+            "nonSortableColumns": [-1]
+        }
     },
 
     productos: {
         "order": [[1, "asc"]],
-        "columnDefs": [
-            { "targets": [0, 3, 4, 5], "className": "text-center" },
-            { "targets": [5], "orderable": false }
-        ]
+        "autoColumnConfig": true,
+        "manualConfig": {
+            "centerColumns": [0, 3, 4, 5], // ID, Precio, Estado, Acciones
+            "nonSortableColumns": [-1]
+        }
     },
 
     materiales: {
         "order": [[1, "asc"]],
-        "columnDefs": [
-            { "targets": [0, 4, 5], "className": "text-center" },
-            { "targets": [5], "orderable": false }
-        ]
+        "autoColumnConfig": true,
+        "manualConfig": {
+            "centerColumns": [0, 4, 5], // ID, Estado, Acciones
+            "nonSortableColumns": [-1]
+        }
     },
 
     pedidos: {
         "order": [[0, "desc"]],
-        "columnDefs": [
-            { "targets": [0, 4, 5, 6], "className": "text-center" },
-            { "targets": [6], "orderable": false }
-        ]
+        "autoColumnConfig": true,
+        "manualConfig": {
+            "centerColumns": [0, 4, 5, 6], // ID, Estado, Fecha, Acciones
+            "nonSortableColumns": [-1]
+        }
     },
 
     ventas: {
         "order": [[0, "desc"]],
-        "columnDefs": [
-            { "targets": [0, 4, 5, 6], "className": "text-center" },
-            { "targets": [6], "orderable": false }
-        ]
+        "autoColumnConfig": true,
+        "manualConfig": {
+            "centerColumns": [0, 4, 5, 6], // ID, Total, Fecha, Acciones
+            "nonSortableColumns": [-1]
+        }
     },
 
     proveedores: {
         "order": [[1, "asc"]],
-        "columnDefs": [
-            { "targets": [0, 4, 5], "className": "text-center" },
-            { "targets": [5], "orderable": false }
-        ]
+        "autoColumnConfig": true,
+        "manualConfig": {
+            "centerColumns": [0, 4, 5], // ID, Estado, Acciones
+            "nonSortableColumns": [-1]
+        }
     },
 
     produccion: {
         "order": [[0, "desc"]],
-        "columnDefs": [
-            { "targets": [0, 4, 5, 6], "className": "text-center" },
-            { "targets": [6], "orderable": false }
-        ]
+        "autoColumnConfig": true,
+        "manualConfig": {
+            "centerColumns": [0, 4, 5, 6], // ID, Estado, Fecha, Acciones
+            "nonSortableColumns": [-1]
+        }
+    },
+
+    // Configuración genérica para tablas simples (3-4 columnas)
+    simple: {
+        "order": [[0, "asc"]],
+        "autoColumnConfig": true,
+        "manualConfig": {
+            "centerColumns": [0, -1], // Primera y última columna
+            "nonSortableColumns": [-1] // Última columna (generalmente acciones)
+        }
+    },
+
+    // Configuración para tablas con muchas columnas (7+ columnas)
+    extended: {
+        "order": [[1, "asc"]],
+        "autoColumnConfig": true,
+        "manualConfig": {
+            "centerColumns": [0, -3, -2, -1], // ID y últimas 3 columnas
+            "nonSortableColumns": [-1]
+        }
     }
 };
 
@@ -125,7 +155,16 @@ class DataTableManager {
 
         // Aplicar configuración específica del tipo si existe
         if (DataTablesConfig[tableType]) {
-            config = { ...config, ...DataTablesConfig[tableType] };
+            const typeConfig = { ...DataTablesConfig[tableType] };
+            
+            // Si tiene autoColumnConfig, generar columnDefs automáticamente
+            if (typeConfig.autoColumnConfig && typeConfig.manualConfig) {
+                typeConfig.columnDefs = DataTableManager.generateColumnDefs($table, typeConfig.manualConfig);
+                delete typeConfig.autoColumnConfig;
+                delete typeConfig.manualConfig;
+            }
+            
+            config = { ...config, ...typeConfig };
         }
 
         // Aplicar configuración personalizada
@@ -145,6 +184,47 @@ class DataTableManager {
             console.error(`Error al inicializar DataTable '${tableId}':`, error);
             return null;
         }
+    }
+
+    /**
+     * Generar configuración de columnas automáticamente
+     * @param {jQuery} $table - Elemento jQuery de la tabla
+     * @param {object} manualConfig - Configuración manual (centerColumns, nonSortableColumns, etc.)
+     * @returns {Array} Array de configuraciones de columnas
+     */
+    static generateColumnDefs($table, manualConfig) {
+        const columnDefs = [];
+        
+        // Obtener número total de columnas
+        const totalColumns = $table.find('thead th').length;
+        
+        // Convertir índices negativos a positivos (ej: -1 = última columna)
+        const centerColumns = manualConfig.centerColumns.map(index => 
+            index < 0 ? totalColumns + index : index
+        );
+        
+        const nonSortableColumns = manualConfig.nonSortableColumns.map(index => 
+            index < 0 ? totalColumns + index : index
+        );
+        
+        // Configurar columnas centradas
+        if (centerColumns.length > 0) {
+            columnDefs.push({
+                "targets": centerColumns,
+                "className": "text-center"
+            });
+        }
+        
+        // Configurar columnas no ordenables
+        if (nonSortableColumns.length > 0) {
+            columnDefs.push({
+                "targets": nonSortableColumns,
+                "orderable": false
+            });
+        }
+        
+        console.log(`Auto-generada configuración para ${totalColumns} columnas:`, columnDefs);
+        return columnDefs;
     }
 
     /**

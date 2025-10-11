@@ -60,7 +60,7 @@ $baseUrl = getBaseUrl();
 
 <!-- ===== SCRIPTS PERSONALIZADOS ===== -->
 <!-- Inicialización común de DataTables -->
-<script src="<?= $baseUrl ?>/assets/js/datatables-init.js"></script>
+<script src="<?= $baseUrl ?>/assets/js/datatables-init.js?v=<?= time() ?>"></script>
 
 <!-- ===== CONFIGURACIÓN GLOBAL ===== -->
 <script>
