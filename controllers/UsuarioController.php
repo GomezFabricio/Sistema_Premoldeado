@@ -99,6 +99,13 @@ class UsuarioController extends BaseController {
                     $this->redirectToDashboard('ID de perfil requerido', 'error');
                 }
                 break;
+            case 'reactivar_perfil':
+                if ($id) {
+                    $this->reactivarPerfil($id);
+                } else {
+                    $this->redirectToDashboard('ID de perfil requerido', 'error');
+                }
+                break;
             default:
                 $this->index();
         }
@@ -415,7 +422,7 @@ class UsuarioController extends BaseController {
             $data = [
                 'perfil' => $perfil,
                 'modulos' => $modulos ?? [],
-                'modulos_asignados' => $modulosAsignadosIds,
+                'modulosAsignadosIds' => $modulosAsignadosIds,
                 'titulo' => 'Editar Perfil',
                 'usuario_logueado' => $this->usuario
             ];
@@ -470,20 +477,38 @@ class UsuarioController extends BaseController {
     }
     
     /**
-     * Eliminar perfil
+     * Eliminar perfil (baja lógica)
      */
     public function eliminarPerfil($id) {
         try {
             $resultado = $this->usuarioModel->eliminarPerfil($id);
             
             if ($resultado['success']) {
-                $this->redirectToController('Usuario', 'perfiles', [], 'Perfil eliminado exitosamente', 'success');
+                $this->redirectToController('Usuario', 'perfiles', [], 'Perfil desactivado exitosamente', 'success');
             } else {
                 $this->redirectToController('Usuario', 'perfiles', [], $resultado['message'], 'error');
             }
             
         } catch (Exception $e) {
-            $this->redirectToController('Usuario', 'perfiles', [], 'Error al eliminar perfil: ' . $e->getMessage(), 'error');
+            $this->redirectToController('Usuario', 'perfiles', [], 'Error al desactivar perfil: ' . $e->getMessage(), 'error');
+        }
+    }
+    
+    /**
+     * Reactivar perfil
+     */
+    public function reactivarPerfil($id) {
+        try {
+            $resultado = $this->usuarioModel->reactivarPerfil($id);
+            
+            if ($resultado['success']) {
+                $this->redirectToController('Usuario', 'perfiles', [], 'Perfil reactivado exitosamente', 'success');
+            } else {
+                $this->redirectToController('Usuario', 'perfiles', [], $resultado['message'], 'error');
+            }
+            
+        } catch (Exception $e) {
+            $this->redirectToController('Usuario', 'perfiles', [], 'Error al reactivar perfil: ' . $e->getMessage(), 'error');
         }
     }
 }

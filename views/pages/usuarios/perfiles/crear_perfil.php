@@ -117,12 +117,27 @@
                     <div class="card-body">
                         <form action="/Sistema_Premoldeado/controllers/UsuarioController.php?a=guardar_perfil" method="POST" id="formCrearPerfil">
                             <!-- Información básica -->
-                            <div class="mb-4">
-                                <label for="nombre" class="form-label fw-bold">
-                                    <i class="fas fa-tag me-2"></i>Nombre del Perfil <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control form-control-lg" id="nombre" name="nombre" 
-                                       placeholder="Ej: Administrador, Vendedor, etc." required>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="mb-4">
+                                        <label for="nombre" class="form-label fw-bold">
+                                            <i class="fas fa-tag me-2"></i>Nombre del Perfil <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control form-control-lg" id="nombre" name="nombre" 
+                                               placeholder="Ej: Administrador, Vendedor, etc." required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-4">
+                                        <label for="estado" class="form-label fw-bold">
+                                            <i class="fas fa-toggle-on me-2"></i>Estado
+                                        </label>
+                                        <select class="form-select form-select-lg" id="estado" name="estado">
+                                            <option value="1" selected>Activo</option>
+                                            <option value="0">Inactivo</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </form>
                     </div>

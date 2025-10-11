@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 11-10-2025 a las 17:25:03
+-- Tiempo de generación: 11-10-2025 a las 19:16:23
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -313,16 +313,17 @@ INSERT INTO `pedidos` (`id`, `fecha`, `forma_entrega_id`, `estado_pedido_id`, `c
 
 CREATE TABLE `perfiles` (
   `id` int(11) NOT NULL,
-  `nombre` varchar(45) NOT NULL
+  `nombre` varchar(45) NOT NULL,
+  `estado` tinyint(1) NOT NULL DEFAULT 1 COMMENT 'Estado del perfil: 1=Activo, 0=Inactivo'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `perfiles`
 --
 
-INSERT INTO `perfiles` (`id`, `nombre`) VALUES
-(1, 'Administrador'),
-(2, 'Cliente');
+INSERT INTO `perfiles` (`id`, `nombre`, `estado`) VALUES
+(1, 'Administrador', 1),
+(2, 'Cliente', 1);
 
 -- --------------------------------------------------------
 
@@ -932,7 +933,8 @@ ALTER TABLE `pedidos`
 --
 ALTER TABLE `perfiles`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `idperfiles_UNIQUE` (`id`);
+  ADD UNIQUE KEY `idperfiles_UNIQUE` (`id`),
+  ADD KEY `idx_perfiles_estado` (`estado`);
 
 --
 -- Indices de la tabla `perfiles_modulos`
@@ -1127,7 +1129,7 @@ ALTER TABLE `pedidos`
 -- AUTO_INCREMENT de la tabla `perfiles`
 --
 ALTER TABLE `perfiles`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `personas`

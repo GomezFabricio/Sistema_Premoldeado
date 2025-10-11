@@ -121,10 +121,10 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="activo" class="form-label">Estado</label>
-                                    <select class="form-select" id="activo" name="activo">
-                                        <option value="1" <?= ($perfil['activo'] ?? true) ? 'selected' : '' ?>>Activo</option>
-                                        <option value="0" <?= !($perfil['activo'] ?? true) ? 'selected' : '' ?>>Inactivo</option>
+                                    <label for="estado" class="form-label">Estado</label>
+                                    <select class="form-select" id="estado" name="estado">
+                                        <option value="1" <?= ($perfil['estado'] ?? 1) == 1 ? 'selected' : '' ?>>Activo</option>
+                                        <option value="0" <?= ($perfil['estado'] ?? 1) == 0 ? 'selected' : '' ?>>Inactivo</option>
                                     </select>
                                 </div>
                             </div>

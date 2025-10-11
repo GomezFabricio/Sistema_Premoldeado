@@ -48,6 +48,28 @@
         
         .table th {
             background-color: #f8f9fa;
+        }
+        
+        /* Estilos para tooltips */
+        .tooltip {
+            font-size: 0.875rem;
+        }
+        
+        .tooltip-inner {
+            max-width: 300px;
+            text-align: left;
+            background-color: #212529;
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+        
+        .badge[data-bs-toggle="tooltip"] {
+            transition: all 0.2s ease;
+        }
+        
+        .badge[data-bs-toggle="tooltip"]:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,123,255,0.3);
             border-top: none;
             color: #495057;
             font-weight: 600;
@@ -56,6 +78,17 @@
         .badge {
             border-radius: 20px;
             padding: 0.5em 0.75em;
+        }
+        
+        /* Estilos para perfiles protegidos */
+        .perfil-critico {
+            background-color: #fff3cd !important;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .btn-protegido {
+            cursor: not-allowed;
+            opacity: 0.6;
         }
     </style>
 </head>
@@ -118,6 +151,7 @@
                                     <tr>
                                         <th class="text-center">ID</th>
                                         <th>Nombre del Perfil</th>
+                                        <th class="text-center">Estado</th>
                                         <th class="text-center">Módulos</th>
                                         <th class="text-center">Usuarios</th>
                                         <th class="text-center">Acciones</th>
@@ -126,45 +160,111 @@
                 <tbody>
                     <?php if (empty($perfiles)): ?>
                         <tr>
-                            <td colspan="5" class="text-center text-muted">
+                            <td colspan="6" class="text-center text-muted">
                                 <i class="fas fa-user-shield fa-2x mb-2"></i><br>
                                 No hay perfiles registrados
                             </td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($perfiles as $perfil): ?>
-                            <tr>
+                            <?php $esPerfilCritico = in_array(strtolower($perfil['nombre']), ['administrador', 'admin']); ?>
+                            <tr <?= $esPerfilCritico ? 'class="perfil-critico"' : '' ?>>
                                 <td class="text-center">
                                     <span class="badge bg-primary"><?= htmlspecialchars($perfil['id']) ?></span>
                                 </td>
                                 <td>
                                     <strong><?= htmlspecialchars($perfil['nombre']) ?></strong>
+                                    <?php if ($esPerfilCritico): ?>
+                                        <span class="badge bg-warning ms-2" title="Perfil crítico del sistema">
+                                            <i class="fas fa-shield-alt"></i> Sistema
+                                        </span>
+                                    <?php endif; ?>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-info"><?= intval($perfil['total_modulos'] ?? 0) ?> módulos</span>
+                                    <?php if (($perfil['estado'] ?? 1) == 1): ?>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle me-1"></i>Activo
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times-circle me-1"></i>Inactivo
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-center">
+                                    <?php 
+                                    $totalModulos = intval($perfil['total_modulos'] ?? 0);
+                                    $modulosNombres = $perfil['modulos_nombres'] ?? [];
+                                    
+                                    if ($totalModulos > 0 && !empty($modulosNombres)) {
+                                        // Crear contenido del tooltip con viñetas
+                                        $tooltipItems = array_map(function($modulo) {
+                                            return '• ' . htmlspecialchars($modulo);
+                                        }, $modulosNombres);
+                                        $tooltipContent = '<strong>Módulos asignados:</strong><br>' . implode('<br>', $tooltipItems);
+                                    ?>
+                                        <span class="badge bg-info position-relative" 
+                                              data-bs-toggle="tooltip" 
+                                              data-bs-placement="top" 
+                                              data-bs-html="true"
+                                              data-bs-title="<?= htmlspecialchars($tooltipContent) ?>"
+                                              style="cursor: help;">
+                                            <?= $totalModulos ?> módulos
+                                            <i class="fas fa-info-circle ms-1 opacity-75" style="font-size: 0.8em;"></i>
+                                        </span>
+                                    <?php } else { ?>
+                                        <span class="badge bg-secondary">0 módulos</span>
+                                    <?php } ?>
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-secondary"><?= intval($perfil['total_usuarios'] ?? 0) ?> usuarios</span>
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group" role="group">
+                                        <!-- Botón Editar - siempre disponible -->
                                         <a href="/Sistema_Premoldeado/controllers/UsuarioController.php?a=editar_perfil&id=<?= $perfil['id'] ?>" 
                                            class="btn btn-sm btn-outline-primary" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <?php if (($perfil['total_usuarios'] ?? 0) == 0): ?>
-                                            <a href="/Sistema_Premoldeado/controllers/UsuarioController.php?a=eliminar_perfil&id=<?= $perfil['id'] ?>" 
-                                               class="btn btn-sm btn-outline-danger" 
-                                               title="Eliminar"
-                                               onclick="return confirm('¿Estás seguro de eliminar este perfil?')">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
+                                        
+                                        <?php if (($perfil['estado'] ?? 1) == 1): ?>
+                                            <!-- Perfil Activo - Botón Desactivar -->
+                                            <?php 
+                                            $totalUsuarios = intval($perfil['total_usuarios'] ?? 0);
+                                            $esPerfilCritico = in_array(strtolower($perfil['nombre']), ['administrador', 'admin']);
+                                            $puedeDesactivar = ($totalUsuarios == 0) && !$esPerfilCritico;
+                                            ?>
+                                            
+                                            <?php if ($puedeDesactivar): ?>
+                                                <a href="/Sistema_Premoldeado/controllers/UsuarioController.php?a=eliminar_perfil&id=<?= $perfil['id'] ?>" 
+                                                   class="btn btn-sm btn-outline-warning" 
+                                                   title="Desactivar perfil"
+                                                   onclick="return confirm('¿Estás seguro de desactivar este perfil? El perfil se mantendrá en el sistema pero no podrá ser asignado a nuevos usuarios.')">
+                                                    <i class="fas fa-toggle-off"></i>
+                                                </a>
+                                            <?php else: ?>
+                                                <?php 
+                                                $razonDeshabilitado = '';
+                                                if ($esPerfilCritico) {
+                                                    $razonDeshabilitado = 'Perfil crítico del sistema - No se puede desactivar';
+                                                } elseif ($totalUsuarios > 0) {
+                                                    $razonDeshabilitado = "Tiene {$totalUsuarios} usuario(s) activo(s) - Desactive primero los usuarios";
+                                                }
+                                                ?>
+                                                <button class="btn btn-sm btn-outline-secondary" 
+                                                        title="<?= htmlspecialchars($razonDeshabilitado) ?>" 
+                                                        disabled>
+                                                    <i class="fas fa-shield-alt"></i>
+                                                </button>
+                                            <?php endif; ?>
                                         <?php else: ?>
-                                            <button class="btn btn-sm btn-outline-danger" 
-                                                    title="No se puede eliminar (tiene usuarios asignados)" 
-                                                    disabled>
-                                                <i class="fas fa-trash"></i>
-                                            </button>
+                                            <!-- Perfil Inactivo - Botón Reactivar -->
+                                            <a href="/Sistema_Premoldeado/controllers/UsuarioController.php?a=reactivar_perfil&id=<?= $perfil['id'] ?>" 
+                                               class="btn btn-sm btn-outline-success" 
+                                               title="Reactivar perfil"
+                                               onclick="return confirm('¿Estás seguro de reactivar este perfil? El perfil volverá a estar disponible para ser asignado a usuarios.')">
+                                                <i class="fas fa-toggle-on"></i>
+                                            </a>
                                         <?php endif; ?>
                                     </div>
                                 </td>
@@ -187,6 +287,7 @@
     
     <script>
     $(document).ready(function() {
+        // Inicializar DataTable
         $('#perfiles_table').DataTable({
             "language": {
                 "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/Spanish.json"
@@ -195,18 +296,20 @@
             "order": [[0, "asc"]],
             "responsive": true,
             "columnDefs": [
-                { "targets": [0, 2, 3, 4], "className": "text-center" }
+                { "targets": [0, 2, 3, 4, 5], "className": "text-center" }
             ]
         });
         
-        // Confirmación de eliminación
-        document.querySelectorAll('a[onclick*="confirm"]').forEach(function(link) {
-            link.addEventListener('click', function(e) {
-                if (!confirm('¿Estás seguro de eliminar este perfil? Esta acción no se puede deshacer.')) {
-                    e.preventDefault();
-                }
+        // Inicializar todos los tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl, {
+                html: true,
+                delay: { "show": 300, "hide": 100 }
             });
         });
+        
+        // Confirmación de desactivación - Ya manejado por onclick inline
     });
     </script>
 </body>

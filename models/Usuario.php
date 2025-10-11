@@ -2,10 +2,12 @@
 require_once __DIR__ . '/../config/database.php';
 
 class Usuario {
-    /**
-     * Desactiva (baja lógica) un usuario
-     * @param int $id ID del usuario
-     * @return array Resultado de la operación
+    private $db;
+    
+    public function __construct() {
+        $this->db = Database::getInstance()->getConnection();
+    }
+    
     /**
      * Método para crear usuario con validaciones adicionales
      */
@@ -99,7 +101,7 @@ class Usuario {
             ];
         }
     }
-
+    
     /**
      * Desactiva (baja lógica) un usuario
      * @param int $id ID del usuario
@@ -116,11 +118,6 @@ class Usuario {
             error_log("Error al desactivar usuario: " . $e->getMessage());
             return ['success' => false, 'message' => 'Error interno del servidor'];
         }
-    }
-    private $db;
-    
-    public function __construct() {
-        $this->db = Database::getInstance()->getConnection();
     }
     
     public function autenticar($email, $password) {
@@ -330,7 +327,7 @@ class Usuario {
      */
     public function obtenerPerfiles() {
         try {
-            $sql = "SELECT id, nombre FROM perfiles WHERE activo = 1 ORDER BY nombre";
+            $sql = "SELECT id, nombre FROM perfiles WHERE estado = 1 ORDER BY nombre";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -368,24 +365,37 @@ class Usuario {
             $sql = "SELECT 
                         p.id, 
                         p.nombre,
+                        p.estado,
                         COUNT(DISTINCT pm.modulos_id) as total_modulos,
                         COUNT(DISTINCT u.id) as total_usuarios
                     FROM perfiles p
                     LEFT JOIN perfiles_modulos pm ON p.id = pm.perfiles_id
-                    LEFT JOIN usuarios u ON p.id = u.perfil_id
-                    GROUP BY p.id, p.nombre
-                    ORDER BY p.nombre ASC";
+                    LEFT JOIN usuarios u ON p.id = u.perfil_id AND u.activo = 1
+                    GROUP BY p.id, p.nombre, p.estado
+                    ORDER BY p.estado DESC, p.nombre ASC";
             
             $stmt = $db->prepare($sql);
             $stmt->execute();
             
             $perfiles = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Agregar campos faltantes con valores por defecto
+            // Obtener los nombres de módulos para cada perfil
             foreach ($perfiles as &$perfil) {
                 $perfil['descripcion'] = 'Perfil de ' . $perfil['nombre'];
                 $perfil['activo'] = 1; // Todos activos por defecto
                 $perfil['fecha_creacion'] = '2024-01-01'; // Fecha por defecto
+                
+                // Obtener nombres de módulos asignados
+                $sqlModulos = "SELECT m.nombre 
+                              FROM modulos m 
+                              INNER JOIN perfiles_modulos pm ON m.id = pm.modulos_id 
+                              WHERE pm.perfiles_id = ? 
+                              ORDER BY m.nombre ASC";
+                $stmtModulos = $db->prepare($sqlModulos);
+                $stmtModulos->execute([$perfil['id']]);
+                $modulosNombres = $stmtModulos->fetchAll(PDO::FETCH_COLUMN);
+                
+                $perfil['modulos_nombres'] = $modulosNombres;
             }
             
             return $perfiles;
@@ -404,7 +414,7 @@ class Usuario {
     public static function obtenerPerfilPorId($id) {
         try {
             $db = Database::getInstance()->getConnection();
-            $sql = "SELECT id, nombre FROM perfiles WHERE id = ?";
+            $sql = "SELECT id, nombre, estado FROM perfiles WHERE id = ?";
             
             $stmt = $db->prepare($sql);
             $stmt->execute([$id]);
@@ -434,6 +444,7 @@ class Usuario {
             
             // Sanitizar datos
             $nombre = trim($datos['nombre']);
+            $estado = isset($datos['estado']) ? (int)$datos['estado'] : 1; // Por defecto activo
             
             // Validar longitud del nombre
             if (strlen($nombre) > 45) {
@@ -445,22 +456,22 @@ class Usuario {
             
             $db = Database::getInstance()->getConnection();
             
-            // Verificar que no exista un perfil con el mismo nombre
-            $sqlVerificar = "SELECT id FROM perfiles WHERE nombre = ?";
+            // Verificar que no exista un perfil activo con el mismo nombre
+            $sqlVerificar = "SELECT id FROM perfiles WHERE nombre = ? AND estado = 1";
             $stmtVerificar = $db->prepare($sqlVerificar);
             $stmtVerificar->execute([$nombre]);
             
             if ($stmtVerificar->fetch()) {
                 return [
                     'success' => false,
-                    'message' => 'Ya existe un perfil con este nombre'
+                    'message' => 'Ya existe un perfil activo con este nombre'
                 ];
             }
             
             // Insertar nuevo perfil
-            $sql = "INSERT INTO perfiles (nombre) VALUES (?)";
+            $sql = "INSERT INTO perfiles (nombre, estado) VALUES (?, ?)";
             $stmt = $db->prepare($sql);
-            $stmt->execute([$nombre]);
+            $stmt->execute([$nombre, $estado]);
             
             $perfilId = $db->lastInsertId();
             
@@ -506,6 +517,7 @@ class Usuario {
             
             // Sanitizar datos
             $nombre = trim($datos['nombre']);
+            $estado = isset($datos['estado']) ? (int)$datos['estado'] : 1;
             
             // Validar longitud del nombre
             if (strlen($nombre) > 45) {
@@ -517,22 +529,22 @@ class Usuario {
             
             $db = Database::getInstance()->getConnection();
             
-            // Verificar que no exista otro perfil con el mismo nombre
-            $sqlVerificar = "SELECT id FROM perfiles WHERE nombre = ? AND id != ?";
+            // Verificar que no exista otro perfil activo con el mismo nombre
+            $sqlVerificar = "SELECT id FROM perfiles WHERE nombre = ? AND id != ? AND estado = 1";
             $stmtVerificar = $db->prepare($sqlVerificar);
             $stmtVerificar->execute([$nombre, $id]);
             
             if ($stmtVerificar->fetch()) {
                 return [
                     'success' => false,
-                    'message' => 'Ya existe otro perfil con este nombre'
+                    'message' => 'Ya existe otro perfil activo con este nombre'
                 ];
             }
             
             // Actualizar perfil
-            $sql = "UPDATE perfiles SET nombre = ? WHERE id = ?";
+            $sql = "UPDATE perfiles SET nombre = ?, estado = ? WHERE id = ?";
             $stmt = $db->prepare($sql);
-            $stmt->execute([$nombre, $id]);
+            $stmt->execute([$nombre, $estado, $id]);
             
             return [
                 'success' => true,
@@ -558,17 +570,27 @@ class Usuario {
     public static function eliminarPerfil($id) {
         try {
             // Validar que el perfil existe
-            if (!self::obtenerPerfilPorId($id)) {
+            $perfil = self::obtenerPerfilPorId($id);
+            if (!$perfil) {
                 return [
                     'success' => false,
                     'message' => 'El perfil especificado no existe'
                 ];
             }
             
+            // Verificar si es un perfil crítico del sistema
+            $perfilesCriticos = ['administrador', 'admin'];
+            if (in_array(strtolower($perfil['nombre']), $perfilesCriticos)) {
+                return [
+                    'success' => false,
+                    'message' => 'No se puede desactivar el perfil Administrador ya que es crítico para el funcionamiento del sistema'
+                ];
+            }
+            
             $db = Database::getInstance()->getConnection();
             
-            // Verificar si hay usuarios asociados a este perfil
-            $sqlVerificar = "SELECT COUNT(*) as total FROM usuarios WHERE perfil_id = ?";
+            // Verificar si hay usuarios activos asociados a este perfil
+            $sqlVerificar = "SELECT COUNT(*) as total FROM usuarios WHERE perfil_id = ? AND activo = 1";
             $stmtVerificar = $db->prepare($sqlVerificar);
             $stmtVerificar->execute([$id]);
             $resultado = $stmtVerificar->fetch();
@@ -576,31 +598,18 @@ class Usuario {
             if ($resultado['total'] > 0) {
                 return [
                     'success' => false,
-                    'message' => 'No se puede eliminar el perfil porque tiene usuarios asociados'
+                    'message' => 'No se puede desactivar el perfil porque tiene usuarios activos asociados. Desactive primero los usuarios.'
                 ];
             }
             
-            // Verificar si hay módulos asociados a este perfil
-            $sqlVerificarModulos = "SELECT COUNT(*) as total FROM perfiles_modulos WHERE perfiles_id = ?";
-            $stmtVerificarModulos = $db->prepare($sqlVerificarModulos);
-            $stmtVerificarModulos->execute([$id]);
-            $resultadoModulos = $stmtVerificarModulos->fetch();
-            
-            if ($resultadoModulos['total'] > 0) {
-                // Eliminar primero las asociaciones con módulos
-                $sqlEliminarModulos = "DELETE FROM perfiles_modulos WHERE perfiles_id = ?";
-                $stmtEliminarModulos = $db->prepare($sqlEliminarModulos);
-                $stmtEliminarModulos->execute([$id]);
-            }
-            
-            // Eliminar perfil
-            $sql = "DELETE FROM perfiles WHERE id = ?";
+            // Realizar baja lógica del perfil (cambiar estado a 0)
+            $sql = "UPDATE perfiles SET estado = 0 WHERE id = ?";
             $stmt = $db->prepare($sql);
             $stmt->execute([$id]);
             
             return [
                 'success' => true,
-                'message' => 'Perfil eliminado exitosamente'
+                'message' => 'Perfil desactivado exitosamente'
             ];
             
         } catch (PDOException $e) {
@@ -608,6 +617,62 @@ class Usuario {
             return [
                 'success' => false,
                 'message' => 'Error interno del servidor'
+            ];
+        }
+    }
+    
+    /**
+     * Reactivar perfil (baja lógica inversa)
+     * 
+     * @param int $id ID del perfil a reactivar
+     * @return array Resultado de la operación
+     */
+    public static function reactivarPerfil($id) {
+        try {
+            if (!is_numeric($id) || $id <= 0) {
+                return [
+                    'success' => false,
+                    'message' => 'ID de perfil inválido'
+                ];
+            }
+            
+            $db = Database::getInstance()->getConnection();
+            
+            // Verificar que el perfil existe y está inactivo
+            $sqlVerificar = "SELECT estado FROM perfiles WHERE id = ?";
+            $stmtVerificar = $db->prepare($sqlVerificar);
+            $stmtVerificar->execute([$id]);
+            $perfil = $stmtVerificar->fetch();
+            
+            if (!$perfil) {
+                return [
+                    'success' => false,
+                    'message' => 'El perfil no existe'
+                ];
+            }
+            
+            if ($perfil['estado'] == 1) {
+                return [
+                    'success' => false,
+                    'message' => 'El perfil ya está activo'
+                ];
+            }
+            
+            // Reactivar perfil (cambiar estado a 1)
+            $sql = "UPDATE perfiles SET estado = 1 WHERE id = ?";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$id]);
+            
+            return [
+                'success' => true,
+                'message' => 'Perfil reactivado exitosamente'
+            ];
+            
+        } catch (PDOException $e) {
+            error_log("Error al reactivar perfil: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Error al reactivar perfil: ' . $e->getMessage()
             ];
         }
     }
