@@ -1,121 +1,42 @@
-## ANÁLISIS DE MÓDULOS, CIRCUITO DEL SISTEMA Y REVISIÓN DE PERSONAS (CLIENTES)
+# Flujo de Login, Autenticación, Navegación y Control de Acceso
 
-### 1. Módulos Detectados y Estado CRUD
+## 1. Login (`login.php`)
+- El usuario ingresa sus credenciales en el formulario de login.
+- Al enviar el formulario, se instancia `AuthController` y se llama a su método `login($email, $password)`.
+- Si el login es exitoso, el método retorna un array con `'success' => true` y la URL de redirección al dashboard.
+- `login.php` redirige al usuario al dashboard usando `header('Location: ...')`.
 
-| Módulo        | Controlador | Vistas | CRUD (Listar, Alta, Baja, Modificar) | Estado |
-|-------------- |:-----------:|:------:|:------------------------------------:|:------:|
-| Productos     |   ✅        |  ✅    |   ✅                                | ✅ Completo |
-| Producción    |   ✅        |  ✅    |   ✅                                | ✅ Completo |
-| Materiales    |   ✅        |  ✅    |   ✅                                | ✅ Completo |
-| Ventas        |   ✅        |  ✅    |   ✅                                | ✅ Completo |
-| Pedidos       |   ✅        |  ✅    |   ✅                                | ✅ Completo |
-| Usuarios      |   ✅        |  ✅    |   ✅                                | ✅ Completo |
-| Proveedores   |   ✅        |  ✅    |   ✅                                | ✅ Completo |
-| Personas      |   ✅        |  ✅    |   ✅                                | ✅ Completo |
+## 2. Autenticación y Sesión (`AuthController.php`)
+- El método `login` valida las credenciales y, si son correctas, llama a `crearSesion($usuario)`.
+- `crearSesion` guarda los datos del usuario en la sesión y obtiene los módulos permitidos para su perfil.
+- Para estructurar estos módulos, llama a `NavigationController::prepararModulosParaMenu($modulos)`, que enriquece la lista de módulos con iconos, URLs y submódulos.
+- Los módulos enriquecidos se guardan en `$_SESSION['modulos']`.
 
-Todos los módulos principales tienen controlador, vistas y archivos para listar, crear, editar y baja lógica.
+## 3. Menú y Navegación (`NavigationController.php`)
+- `NavigationController` tiene la función `prepararModulosParaMenu`, que toma la lista de módulos del usuario y la cruza con la configuración global (`getConfiguracionModulos`).
+- Así, cada módulo del usuario tiene su icono, url y submódulos listos para ser usados en el menú de la interfaz.
+- El menú de la aplicación se construye dinámicamente usando la información de `$_SESSION['modulos']`.
 
----
-
-### 2. Circuito del Sistema (Mapa de Relaciones)
-
-- **Personas** es la entidad base: de ella derivan Clientes, Proveedores y Usuarios.
-- **Clientes** y **Proveedores** dependen de Personas (por FK).
-- **Productos** y **Materiales** pueden estar vinculados a Proveedores.
-- **Pedidos** dependen de Clientes y Productos/Materiales.
-- **Producción** consume Materiales y genera Productos.
-- **Ventas** dependen de Clientes y Productos.
-- **Usuarios** dependen de Personas y Perfiles.
-- **Pedidos** y **Ventas** requieren que el módulo Personas esté completo y funcional.
+## 4. Control de Acceso (`BaseController.php` y `modules.php`)
+- Todos los controladores heredan de `BaseController`.
+- En el constructor de `BaseController`, se verifica automáticamente que el usuario esté autenticado.
+- Para cada acción protegida (por ejemplo, ver usuarios), el controlador llama a `verificarAccesoModulo(ModuleConfig::USUARIOS)`.
+- `modules.php` define constantes para cada módulo, facilitando el uso de nombres claros en vez de números.
+- `verificarAccesoModulo` revisa si el módulo correspondiente está en la lista de módulos del usuario (`$_SESSION['modulos']`). Si no tiene acceso, se redirige o se muestra un error.
 
 ---
 
-### 3. Módulo Personas (Clientes) - Revisión CRUD
+## Resumen del flujo
+1. El usuario inicia sesión en `login.php`.
+2. `AuthController` valida y crea la sesión, obteniendo los módulos permitidos y estructurándolos con `NavigationController`.
+3. El menú de la aplicación se genera dinámicamente según los módulos del usuario.
+4. Cada vez que el usuario accede a una sección, el controlador verifica si tiene permiso usando las constantes de `modules.php` y la lógica de `BaseController`.
 
-- **Controlador:** `PersonaController.php` implementa todos los métodos necesarios para CRUD (index, create, store, edit, update, delete).
-- **Vistas:** existen archivos para crear (`crear_persona.php`), editar (`editar_persona.php`) y listar (`listado_personas.php`) personas.
-- **Alta:** formulario completo en `crear_persona.php`.
-- **Edición:** formulario en `editar_persona.php` con carga de datos.
-- **Listado:** muestra todas las personas y permite editar/eliminar.
-- **Baja lógica:** la acción delete está presente y pide confirmación.
-- **Conclusión:** El módulo Personas tiene el CRUD completo y funcional.
+Este diseño permite un control de acceso centralizado, un menú personalizado y una gestión clara de permisos y navegación.
 
 ---
 
-### 4. Avance seguro con el módulo Pedidos
+## Nota sobre el menú actual
+Actualmente, el componente `views/components/menu.php` **no utiliza la lógica de módulos dinámicos** guardados en la sesión (`$_SESSION['modulos']`). En su lugar, muestra un menú fijo y estático, igual para todos los usuarios, independientemente de sus permisos. 
 
-**Dependencias:**
-- El módulo Pedidos depende de Personas (Clientes) y Productos/Materiales.
-- Antes de avanzar, asegúrate que:
-	- El CRUD de Personas funciona correctamente (ya validado).
-	- El CRUD de Productos/Materiales está operativo.
-
-**Pasos para avanzar:**
-1. Verifica que el listado de clientes y productos esté accesible desde Pedidos.
-2. Implementa el formulario de creación de pedido, permitiendo seleccionar cliente y productos.
-3. Asegura que la relación entre pedido y cliente/producto se guarde correctamente.
-4. Implementa la edición y baja lógica de pedidos.
-5. Testea el flujo completo: alta, edición, baja y listado.
-
----
-
-### 5. Recomendaciones
-
-- Mantén la documentación y el análisis en este archivo.
-- No dupliques archivos ni crees carpetas extra.
-- Avanza módulo por módulo, validando dependencias antes de implementar nuevas funcionalidades.
-| Clientes      |   ✅        |  ✅    |   ✅                                | ✅ Completo |
-| Personas      |   ❌        |  ❌    |   ❌                                | ❌ Faltante |
-| Perfiles      |   ❌        |  ❌    |   ❌                                | ❌ Faltante |
-| Compras       |   ❌        |  ❌    |   ❌                                | ❌ Faltante |
-| Auditoría     |   ❌        |  ❌    |   ❌                                | ❌ Faltante |
-| Reportes      |   ❌        |  ❌    |   ❌                                | ❌ Faltante |
-
-## 2. Detalle por Módulo
-
-- **Productos**: Controlador, vistas y CRUD completo. Alta, edición y baja lógica funcionales. Listado centralizado.
-- **Producción**: Controlador, vistas y CRUD completo. Integración con reservas y estados.
-- **Materiales**: Controlador, vistas y CRUD completo. Baja lógica implementada.
-- **Ventas**: Controlador y vistas presentes. Falta baja lógica y validación de edición.
-- **Pedidos**: Controlador y vistas presentes. Falta baja lógica y validación de edición.
-- **Usuarios**: Controlador, vistas y CRUD completo. Perfiles gestionados desde submódulo.
-- **Proveedores**: Controlador, vistas y CRUD completo. Baja lógica funcional.
-- **Clientes**: Controlador, vistas y CRUD completo. Baja lógica funcional.
-- **Personas, Perfiles, Compras, Auditoría, Reportes**: No detectados controladores ni vistas base. CRUD no implementado.
-
-## 3. Mapa de Ruta y Dependencias
-
-- **Dependencias principales:**
-	- Pedidos → Clientes, Productos
-	- Producción → Productos, Materiales, Reservas
-	- Ventas → Productos, Clientes, Pedidos
-	- Proveedores → Personas
-	- Usuarios → Perfiles
-- **Prioridad de corrección:**
-	1. Ventas y Pedidos: Implementar baja lógica y validación de edición.
-	2. Personas y Perfiles: Crear controladores y vistas base, implementar CRUD.
-	3. Compras, Auditoría, Reportes: Crear módulos y controladores, definir vistas y lógica.
-	4. Mejorar validaciones y seguridad en todos los módulos.
-
-## 4. Problemas Detectados y Sugerencias
-
-- **Faltan controladores/vistas en módulos secundarios (Personas, Perfiles, Compras, Auditoría, Reportes).**
-	- Sugerencia: Crear archivos base y definir estructura mínima de CRUD.
-- **Ventas y Pedidos sin baja lógica.**
-	- Sugerencia: Implementar baja lógica en controladores y modelos.
-- **Dependencias no documentadas en algunos módulos.**
-	- Sugerencia: Agregar comentarios y diagramas de flujo en el código.
-- **Acceso directo a vistas sin pasar por controlador.**
-	- Sugerencia: Redirigir siempre por el controlador para cargar datos correctamente.
-- **Archivos duplicados y backups:**
-	- Sugerencia: Eliminar manualmente archivos viejos y carpetas duplicadas.
-
-## 5. Resumen y Siguiente Paso
-
-- El sistema tiene los módulos principales operativos, pero requiere completar baja lógica y CRUD en ventas y pedidos, y crear módulos faltantes.
-- Priorizar corrección en dependencias críticas y asegurar que el acceso sea siempre por controlador.
-- Actualizar este reporte tras cada avance relevante.
-
----
-
-*Este reporte se actualiza solo en este archivo. No se generan carpetas ni reportes extra.*
+Para que el menú sea realmente personalizado y seguro, se recomienda modificar este componente para que recorra y utilice la estructura de módulos almacenada en la sesión, generada por `NavigationController::prepararModulosParaMenu` al momento del login.

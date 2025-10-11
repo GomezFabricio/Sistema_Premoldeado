@@ -50,7 +50,7 @@ class AuthController {
                 return [
                     'success' => true,
                     'message' => 'Login exitoso',
-                    'redirect' => '../dashboard.php'
+                    'redirect' => '../../../dashboard.php'
                 ];
             } else {
                 return [

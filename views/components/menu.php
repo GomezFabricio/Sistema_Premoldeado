@@ -19,7 +19,7 @@ $menuModulos = [
     ],
     [
         'nombre' => 'Productos',
-        'url' => '/Sistema_Premoldeado/views/pages/productos/listado_productos.php',
+        'url' => '/Sistema_Premoldeado/controllers/ProductoController.php?action=index',
         'icono' => 'fas fa-boxes',
         'submodulos' => []
     ],
@@ -61,7 +61,7 @@ $menuModulos = [
     ],
     [
         'nombre' => 'Usuarios',
-        'url' => '/Sistema_Premoldeado/views/pages/usuarios/listado_usuarios.php',
+        'url' => '/Sistema_Premoldeado/controllers/UsuarioController.php', // También funciona: /Sistema_Premoldeado/?module=usuarios
         'icono' => 'fas fa-users',
         'submodulos' => []
     ],

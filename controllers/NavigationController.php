@@ -9,6 +9,27 @@ class NavigationController {
     private static $baseUrl = 'http://localhost/Sistema_Premoldeado';
     
     /**
+     * Obtiene URL para un módulo específico
+     * 
+     * @param string $modulo Nombre del módulo
+     * @return string URL del módulo
+     */
+    public static function getUrlFor($modulo) {
+        $urls = [
+            'usuarios' => self::$baseUrl . '/controllers/UsuarioController.php?a=list',
+            'clientes' => self::$baseUrl . '/controllers/ClienteController.php?a=list',
+            'productos' => self::$baseUrl . '/controllers/ProductoController.php?a=list',
+            'materiales' => self::$baseUrl . '/controllers/MaterialController.php?a=list',
+            'pedidos' => self::$baseUrl . '/controllers/PedidoController.php?a=list',
+            'ventas' => self::$baseUrl . '/controllers/VentaController.php?a=list',
+            'proveedores' => self::$baseUrl . '/controllers/ProveedorController.php?a=list',
+            'produccion' => self::$baseUrl . '/controllers/ProduccionController.php?a=list'
+        ];
+        
+        return $urls[$modulo] ?? '#';
+    }
+
+    /**
      * Prepara los módulos con URLs, iconos y submódulos para el menú
      * 
      * @param array $modulosUsuario Módulos básicos del usuario desde el modelo
@@ -52,94 +73,92 @@ class NavigationController {
         return [
             1 => [ // Usuarios
                 'icono' => 'fas fa-users',
-                'url' => self::$baseUrl . '/controllers/UsuarioController.php?action=index',
+                'url' => self::$baseUrl . '/controllers/UsuarioController.php?a=list',
                 'submodulos' => [
-                    ['nombre' => 'Listado de Usuarios', 'url' => self::$baseUrl . '/controllers/UsuarioController.php?action=index'],
-                    ['nombre' => 'Crear Usuario', 'url' => self::$baseUrl . '/controllers/UsuarioController.php?action=create'],
-                    ['nombre' => 'Perfiles', 'url' => self::$baseUrl . '/controllers/UsuarioController.php?action=indexPerfiles']
+                    ['nombre' => 'Listado de Usuarios', 'url' => self::$baseUrl . '/controllers/UsuarioController.php?a=list'],
+                    ['nombre' => 'Crear Usuario', 'url' => self::$baseUrl . '/controllers/UsuarioController.php?a=crear'],
+                    ['nombre' => 'Perfiles', 'url' => self::$baseUrl . '/controllers/UsuarioController.php?a=perfiles']
                 ]
             ],
             2 => [ // Clientes
                 'icono' => 'fas fa-user-friends',
-                'url' => self::$baseUrl . '/controllers/ClienteController.php?action=index',
+                'url' => self::$baseUrl . '/controllers/ClienteController.php?a=list',
                 'submodulos' => [
-                    ['nombre' => 'Listado de Clientes', 'url' => self::$baseUrl . '/controllers/ClienteController.php?action=index'],
-                    ['nombre' => 'Crear Cliente', 'url' => self::$baseUrl . '/controllers/ClienteController.php?action=create']
+                    ['nombre' => 'Listado de Clientes', 'url' => self::$baseUrl . '/controllers/ClienteController.php?a=list'],
+                    ['nombre' => 'Registrar Cliente', 'url' => self::$baseUrl . '/controllers/ClienteController.php?a=crear']
                 ]
             ],
             3 => [ // Productos
                 'icono' => 'fas fa-boxes',
-                'url' => self::$baseUrl . '/controllers/ProductoController.php?action=index',
+                'url' => self::$baseUrl . '/controllers/ProductoController.php?a=list',
                 'submodulos' => [
-                    ['nombre' => 'Listado de Productos', 'url' => self::$baseUrl . '/controllers/ProductoController.php?action=index'],
-                    ['nombre' => 'Crear Producto', 'url' => self::$baseUrl . '/controllers/ProductoController.php?action=create'],
-                    ['nombre' => 'Tipos de Producto', 'url' => self::$baseUrl . '/controllers/ProductoController.php?action=indexTipos']
+                    ['nombre' => 'Listado de Productos', 'url' => self::$baseUrl . '/controllers/ProductoController.php?a=list'],
+                    ['nombre' => 'Crear Producto', 'url' => self::$baseUrl . '/controllers/ProductoController.php?a=crear'],
+                    ['nombre' => 'Tipos de Producto', 'url' => self::$baseUrl . '/controllers/ProductoController.php?a=tipos']
                 ]
             ],
             4 => [ // Materiales
                 'icono' => 'fas fa-cubes',
-                'url' => self::$baseUrl . '/views/pages/materiales/listado_materiales.php',
+                'url' => self::$baseUrl . '/controllers/MaterialController.php?a=list',
                 'submodulos' => [
-                    ['nombre' => 'Listado de Materiales', 'url' => self::$baseUrl . '/views/pages/materiales/listado_materiales.php'],
-                    ['nombre' => 'Crear Material', 'url' => self::$baseUrl . '/views/pages/materiales/crear_material_entry.php']
+                    ['nombre' => 'Listado de Materiales', 'url' => self::$baseUrl . '/controllers/MaterialController.php?a=list'],
+                    ['nombre' => 'Crear Material', 'url' => self::$baseUrl . '/controllers/MaterialController.php?a=crear']
                 ]
             ],
             5 => [ // Pedidos y reservas
                 'icono' => 'fas fa-shopping-cart',
-                'url' => self::$baseUrl . '/controllers/PedidoController.php?action=index',
+                'url' => self::$baseUrl . '/controllers/PedidoController.php?a=list',
                 'submodulos' => [
-                    ['nombre' => 'Listado de Pedidos', 'url' => self::$baseUrl . '/controllers/PedidoController.php?action=index'],
-                    ['nombre' => 'Crear Pedido', 'url' => self::$baseUrl . '/controllers/PedidoController.php?action=create'],
-                    ['nombre' => 'Estados de Pedido', 'url' => self::$baseUrl . '/controllers/PedidoController.php?action=indexEstados'],
-                    ['nombre' => 'Formas de Entrega', 'url' => self::$baseUrl . '/controllers/PedidoController.php?action=indexFormasEntrega'],
-                    ['nombre' => 'Reservas', 'url' => self::$baseUrl . '/controllers/PedidoController.php?action=indexReservas'],
-                    ['nombre' => 'Estados de Reserva', 'url' => self::$baseUrl . '/controllers/PedidoController.php?action=indexEstadosReserva'],
-                    ['nombre' => 'Devoluciones', 'url' => self::$baseUrl . '/controllers/PedidoController.php?action=indexDevoluciones'],
-                    ['nombre' => 'Estados de Devolución', 'url' => self::$baseUrl . '/controllers/PedidoController.php?action=indexEstadosDevoluciones']
+                    ['nombre' => 'Listado de Pedidos', 'url' => self::$baseUrl . '/controllers/PedidoController.php?a=list'],
+                    ['nombre' => 'Crear Pedido', 'url' => self::$baseUrl . '/controllers/PedidoController.php?a=crear'],
+                    ['nombre' => 'Estados de Pedido', 'url' => self::$baseUrl . '/controllers/PedidoController.php?a=estados'],
+                    ['nombre' => 'Formas de Entrega', 'url' => self::$baseUrl . '/controllers/PedidoController.php?a=formas_entrega'],
+                    ['nombre' => 'Reservas', 'url' => self::$baseUrl . '/controllers/PedidoController.php?a=reservas'],
+                    ['nombre' => 'Devoluciones', 'url' => self::$baseUrl . '/controllers/PedidoController.php?a=devoluciones']
                 ]
             ],
             6 => [ // Producción
                 'icono' => 'fas fa-industry',
-                'url' => self::$baseUrl . '/controllers/ProduccionController.php?action=index',
-            'submodulos' => [
-                ['nombre' => 'Listado de Producción', 'url' => self::$baseUrl . '/controllers/ProduccionController.php?action=index'],
-                ['nombre' => 'Crear Producción', 'url' => self::$baseUrl . '/controllers/ProduccionController.php?action=create']
-            ]
+                'url' => self::$baseUrl . '/controllers/ProduccionController.php?a=list',
+                'submodulos' => [
+                    ['nombre' => 'Listado de Producción', 'url' => self::$baseUrl . '/controllers/ProduccionController.php?a=list'],
+                    ['nombre' => 'Crear Producción', 'url' => self::$baseUrl . '/controllers/ProduccionController.php?a=crear']
+                ]
             ],
             7 => [ // Proveedores
                 'icono' => 'fas fa-truck',
-                'url' => self::$baseUrl . '/controllers/ProveedorController.php?action=index',
+                'url' => self::$baseUrl . '/controllers/ProveedorController.php?a=list',
                 'submodulos' => [
-                    ['nombre' => 'Listado de Proveedores', 'url' => self::$baseUrl . '/controllers/ProveedorController.php?action=index'],
-                    ['nombre' => 'Crear Proveedor', 'url' => self::$baseUrl . '/controllers/ProveedorController.php?action=create']
+                    ['nombre' => 'Listado de Proveedores', 'url' => self::$baseUrl . '/controllers/ProveedorController.php?a=list'],
+                    ['nombre' => 'Crear Proveedor', 'url' => self::$baseUrl . '/controllers/ProveedorController.php?a=crear']
                 ]
             ],
             8 => [ // Compras
                 'icono' => 'fas fa-receipt',
-                'url' => self::$baseUrl . '/controllers/CompraController.php?action=index',
+                'url' => self::$baseUrl . '/controllers/CompraController.php?a=list',
                 'submodulos' => [
-                    ['nombre' => 'Listado de Compras', 'url' => self::$baseUrl . '/controllers/CompraController.php?action=index']
+                    ['nombre' => 'Listado de Compras', 'url' => self::$baseUrl . '/controllers/CompraController.php?a=list']
                 ]
             ],
             9 => [ // Ventas
                 'icono' => 'fas fa-cash-register',
-                'url' => self::$baseUrl . '/controllers/VentaController.php?action=index',
+                'url' => self::$baseUrl . '/controllers/VentaController.php?a=list',
                 'submodulos' => [
-                    ['nombre' => 'Listado de Ventas', 'url' => self::$baseUrl . '/controllers/VentaController.php?action=index'],
-                    ['nombre' => 'Crear Venta', 'url' => self::$baseUrl . '/controllers/VentaController.php?action=create'],
-                    ['nombre' => 'Métodos de Pago', 'url' => self::$baseUrl . '/controllers/VentaController.php?action=indexMetodosPago']
+                    ['nombre' => 'Listado de Ventas', 'url' => self::$baseUrl . '/controllers/VentaController.php?a=list'],
+                    ['nombre' => 'Crear Venta', 'url' => self::$baseUrl . '/controllers/VentaController.php?a=crear'],
+                    ['nombre' => 'Métodos de Pago', 'url' => self::$baseUrl . '/controllers/VentaController.php?a=metodos_pago']
                 ]
             ],
             10 => [ // Módulos
                 'icono' => 'fas fa-puzzle-piece',
-                'url' => self::$baseUrl . '/controllers/ModuloController.php?action=index',
+                'url' => self::$baseUrl . '/controllers/ModuloController.php?a=list',
                 'submodulos' => []
             ],
             20 => [ // Parámetros
                 'icono' => 'fas fa-cog',
-                'url' => self::$baseUrl . '/controllers/ParametroController.php?action=index',
+                'url' => self::$baseUrl . '/controllers/ParametroController.php?a=list',
                 'submodulos' => [
-                    ['nombre' => 'Configuración General', 'url' => self::$baseUrl . '/controllers/ParametroController.php?action=index']
+                    ['nombre' => 'Configuración General', 'url' => self::$baseUrl . '/controllers/ParametroController.php?a=list']
                 ]
             ]
         ];
@@ -174,7 +193,7 @@ class NavigationController {
      * @return string URL del dashboard
      */
     public static function getDashboardUrl() {
-        return self::$baseUrl . '/views/pages/dashboard.php';
+        return self::$baseUrl . '/dashboard.php';
     }
     
     /**
@@ -196,7 +215,7 @@ class NavigationController {
     }
     
     /**
-     * Construye una URL para un controlador específico
+     * Construye URL para controlador específico
      * 
      * @param string $controller Nombre del controlador (sin 'Controller')
      * @param string $action Acción a ejecutar
@@ -204,7 +223,7 @@ class NavigationController {
      * @return string URL construida
      */
     public static function buildControllerUrl($controller, $action, $params = []) {
-        $url = self::$baseUrl . '/controllers/' . $controller . 'Controller.php?action=' . $action;
+        $url = self::$baseUrl . '/controllers/' . $controller . 'Controller.php?a=' . $action;
         
         if (!empty($params)) {
             $url .= '&' . http_build_query($params);

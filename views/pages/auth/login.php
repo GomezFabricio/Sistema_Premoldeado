@@ -3,14 +3,20 @@ session_start();
 
 // Si ya está logueado, redirigir al dashboard
 if (isset($_SESSION['usuario_id'])) {
-    header('Location: ../dashboard.php');
+    header('Location: ../../../dashboard.php');
     exit;
 }
 
 require_once __DIR__ . '/../../../controllers/AuthController.php';
 
 $error = '';
+$message = '';
 $authController = new AuthController();
+
+// Verificar si hay mensaje de logout u otro mensaje
+if (isset($_GET['message'])) {
+    $message = $_GET['message'];
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'] ?? '';
@@ -109,6 +115,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
                                     </h2>
                                     <p class="text-muted mb-4">Accede a tu cuenta para continuar</p>
+                                    
+                                    <!-- Mensaje de Éxito -->
+                                    <?php if ($message): ?>
+                                        <div class="alert alert-success border-0 rounded-3 mb-4">
+                                            <i class="fas fa-check-circle me-2"></i><?= htmlspecialchars($message) ?>
+                                        </div>
+                                    <?php endif; ?>
                                     
                                     <!-- Mensaje de Error -->
                                     <?php if ($error): ?>

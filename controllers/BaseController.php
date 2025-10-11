@@ -82,6 +82,24 @@ class BaseController {
     }
     
     /**
+     * Redirigir usando NavigationController
+     */
+    protected function redirectToController($controller, $action = 'index', $params = [], $message = null, $type = 'info') {
+        require_once __DIR__ . '/NavigationController.php';
+        $url = NavigationController::buildControllerUrl($controller, $action, $params);
+        $this->redirect($url, $message, $type);
+    }
+    
+    /**
+     * Redirigir al dashboard
+     */
+    protected function redirectToDashboard($message = null, $type = 'info') {
+        require_once __DIR__ . '/NavigationController.php';
+        $url = NavigationController::getDashboardUrl();
+        $this->redirect($url, $message, $type);
+    }
+    
+    /**
      * Respuesta JSON
      */
     protected function jsonResponse($data, $statusCode = 200) {

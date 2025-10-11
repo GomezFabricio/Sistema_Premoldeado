@@ -49,16 +49,18 @@ class Producto {
             $stmt->bindParam(1, $id, PDO::PARAM_INT);
             $stmt->execute();
             $producto = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($producto) {
-                $producto['estado_stock'] = $this->calcularEstadoStock($producto);
-                $producto['margen_beneficio'] = $this->calcularMargen($producto);
+            // DEBUG: Mostrar el resultado de la consulta
+            if (!$producto) {
+                echo '<pre>Debug obtenerPorId: No se encontró producto para id=' . htmlspecialchars($id) . '</pre>';
+                exit;
             }
-            
+            $producto['estado_stock'] = $this->calcularEstadoStock($producto);
+            $producto['margen_beneficio'] = $this->calcularMargen($producto);
             return $producto;
         } catch (Exception $e) {
             error_log("Error al obtener producto por ID: " . $e->getMessage());
-            return false;
+            echo '<pre>Debug obtenerPorId: Exception - ' . htmlspecialchars($e->getMessage()) . '</pre>';
+            exit;
         }
     }
 
@@ -306,9 +308,12 @@ class Producto {
      * Calcular margen de beneficio
      */
     private function calcularMargen($producto) {
-        $costo = floatval($producto['precio_costo'] ?? 0);
-        $venta = floatval($producto['precio_venta'] ?? 0);
-        
+        // Solo calcular margen si existen ambos campos
+        if (!isset($producto['precio_costo']) || !isset($producto['precio_unitario'])) {
+            return 0;
+        }
+        $costo = floatval($producto['precio_costo']);
+        $venta = floatval($producto['precio_unitario']);
         if ($costo > 0 && $venta > 0) {
             return round((($venta - $costo) / $venta) * 100, 2);
         }

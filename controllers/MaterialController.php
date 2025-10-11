@@ -18,8 +18,8 @@ class MaterialController extends BaseController {
      * ✅ NUEVO: Método estándar para manejar acciones GET
      */
     public function handleRequest() {
-        // Verificar autenticación
-        $this->verificarAcceso();
+        // Verificar acceso al módulo de materiales
+        $this->verificarAccesoModulo(ModuleConfig::MATERIALES);
         
         $action = $_GET['action'] ?? 'index';
         

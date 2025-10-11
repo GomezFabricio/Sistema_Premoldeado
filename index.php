@@ -1,3 +1,4 @@
+
 <?php
 // Diagnóstico: mostrar errores fatales y warnings en desarrollo
 ini_set('display_errors', 1);
@@ -20,10 +21,64 @@ if (!$authController->verificarAutenticacion()) {
     exit;
 }
 
-// Enrutamiento por parámetro controller
+// Enrutamiento por parámetro module (nuevo sistema)
+if (isset($_GET['module'])) {
+    $module = strtolower($_GET['module']);
+    $action = $_GET['a'] ?? 'index';
+    
+    switch ($module) {
+        case 'usuarios':
+            require_once __DIR__ . '/controllers/UsuarioController.php';
+            try {
+                $usuarioController = new UsuarioController();
+                $usuarioController->handleRequest();
+            } catch (Exception $e) {
+                echo "Error en módulo usuarios: " . $e->getMessage();
+            }
+            exit;
+
+        case 'clientes':
+            require_once __DIR__ . '/controllers/ClienteController.php';
+            try {
+                $clienteController = new ClienteController();
+                $clienteController->handleRequest();
+            } catch (Exception $e) {
+                echo "Error en módulo clientes: " . $e->getMessage();
+            }
+            exit;
+            
+        case 'productos':
+            require_once __DIR__ . '/controllers/ProductoController.php';
+            $productoController = new ProductoController();
+            if (method_exists($productoController, $action)) {
+                $productoController->$action();
+            } else {
+                $productoController->listado();
+            }
+            exit;
+            
+        case 'produccion':
+            require_once __DIR__ . '/controllers/ProduccionController.php';
+            $produccionController = new ProduccionController();
+            if (method_exists($produccionController, $action)) {
+                $produccionController->$action();
+            } else {
+                $produccionController->index();
+            }
+            exit;
+            
+        // Agregar más módulos aquí según sea necesario
+        default:
+            echo "Módulo no encontrado: " . htmlspecialchars($module);
+            exit;
+    }
+}
+
+// Enrutamiento por parámetro controller (sistema anterior - compatibilidad)
 if (isset($_GET['controller'])) {
     $controller = strtolower($_GET['controller']);
     $action = $_GET['action'] ?? 'index';
+    
     switch ($controller) {
         case 'produccion':
             require_once __DIR__ . '/controllers/ProduccionController.php';
@@ -34,6 +89,7 @@ if (isset($_GET['controller'])) {
                 $produccionController->index();
             }
             exit;
+            
         case 'producto':
             require_once __DIR__ . '/controllers/ProductoController.php';
             $productoController = new ProductoController();
@@ -43,38 +99,10 @@ if (isset($_GET['controller'])) {
                 $productoController->listado();
             }
             exit;
-        // Puedes agregar otros controladores aquí
     }
 }
-        $controller = strtolower($_GET['controller']);
-        $action = $_GET['action'] ?? 'index';
-        switch ($controller) {
-            case 'produccion':
-                require_once __DIR__ . '/controllers/ProduccionController.php';
-                $produccionController = new ProduccionController();
-                if ($action === 'listado') {
-                    $produccionController->listado();
-                } elseif (method_exists($produccionController, $action)) {
-                    $produccionController->$action();
-                } else {
-                    $produccionController->listado();
-                }
-                exit;
-            case 'producto':
-                require_once __DIR__ . '/controllers/ProductoController.php';
-                $productoController = new ProductoController();
-                if ($action === 'listado') {
-                    $productoController->listado();
-                } elseif (method_exists($productoController, $action)) {
-                    $productoController->$action();
-                } else {
-                    $productoController->listado();
-                }
-                exit;
-            // Puedes agregar otros controladores aquí
-        }
 
-// Si no hay controller, redirigir al dashboard
-header("Location: views/pages/dashboard.php");
+// Si no hay controller, redirigir al dashboard principal
+header("Location: dashboard.php");
 exit;
 ?>

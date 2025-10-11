@@ -2,6 +2,121 @@
 require_once __DIR__ . '/../config/database.php';
 
 class Usuario {
+    /**
+     * Desactiva (baja lógica) un usuario
+     * @param int $id ID del usuario
+     * @return array Resultado de la operación
+    /**
+     * Método para crear usuario con validaciones adicionales
+     */
+    public function crear($datos) {
+        // Validar email único
+        $db = $this->db;
+        $sqlEmail = "SELECT id FROM usuarios WHERE email = ? AND activo = 1";
+        $stmtEmail = $db->prepare($sqlEmail);
+        $stmtEmail->execute([$datos['email']]);
+        if ($stmtEmail->fetch()) {
+            return [
+                'success' => false,
+                'message' => 'El email ya está registrado para otro usuario activo.'
+            ];
+        }
+
+        // Validar fortaleza de contraseña
+        $password = $datos['password'] ?? '';
+        if (strlen($password) < 8 || !preg_match('/[A-Za-z]/', $password) || !preg_match('/[0-9]/', $password)) {
+            return [
+                'success' => false,
+                'message' => 'La contraseña debe tener al menos 8 caracteres, incluir letras y números.'
+            ];
+        }
+
+        try {
+            // Iniciar transacción para crear persona y usuario
+            $this->db->beginTransaction();
+            
+            // 1. Crear registro en tabla personas primero
+            // Generar número de documento único basado en timestamp
+            $numeroDocumento = 'AUTO' . time() . rand(100, 999);
+            
+            $sqlPersona = "INSERT INTO personas (nombres, apellidos, email, tipo_documento, numero_documento, activo, fecha_creacion) 
+                          VALUES (?, ?, ?, 'DNI', ?, 1, NOW())";
+            
+            // Usar el nombre de usuario como nombre por defecto
+            $nombres = $datos['nombre_usuario'];
+            $apellidos = 'Usuario'; // Por defecto
+            
+            $stmtPersona = $this->db->prepare($sqlPersona);
+            $resultadoPersona = $stmtPersona->execute([
+                $nombres,
+                $apellidos, 
+                $datos['email'],
+                $numeroDocumento
+            ]);
+            
+            if (!$resultadoPersona) {
+                $this->db->rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'Error al crear el registro de persona.'
+                ];
+            }
+            
+            $personaId = $this->db->lastInsertId();
+            
+            // 2. Hashear la contraseña
+            $datos['password'] = password_hash($password, PASSWORD_DEFAULT);
+            
+            // 3. Insertar usuario con persona_id
+            $sql = "INSERT INTO usuarios (persona_id, nombre_usuario, email, password, activo, perfil_id) VALUES (?, ?, ?, ?, 1, ?)";
+            $stmt = $this->db->prepare($sql);
+            $resultado = $stmt->execute([
+                $personaId,
+                $datos['nombre_usuario'],
+                $datos['email'],
+                $datos['password'],
+                $datos['perfil_id'] ?? 1
+            ]);
+            
+            if ($resultado) {
+                $usuarioId = $this->db->lastInsertId();
+                $this->db->commit();
+                return $usuarioId;
+            } else {
+                $this->db->rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'Error al crear el usuario.'
+                ];
+            }
+            
+        } catch (PDOException $e) {
+            $this->db->rollBack();
+            error_log("Error al crear usuario: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Error interno: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Desactiva (baja lógica) un usuario
+     * @param int $id ID del usuario
+     * @return array Resultado de la operación
+     */
+    public static function desactivarUsuario($id) {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $sql = "UPDATE usuarios SET activo = 0 WHERE id = ?";
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$id]);
+            return ['success' => true, 'message' => 'Usuario desactivado correctamente'];
+        } catch (PDOException $e) {
+            error_log("Error al desactivar usuario: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Error interno del servidor'];
+        }
+    }
     private $db;
     
     public function __construct() {
@@ -9,9 +124,10 @@ class Usuario {
     }
     
     public function autenticar($email, $password) {
-        $sql = "SELECT u.id, u.nombre_usuario, u.email, u.password, u.activo, u.perfil_id, p.nombre as perfil_nombre 
+        $sql = "SELECT u.persona_id as id, u.nombre_usuario, u.email, u.password, u.activo, u.perfil_id, 
+                       COALESCE(p.nombre, 'Administrador') as perfil_nombre 
                 FROM usuarios u 
-                INNER JOIN perfiles p ON u.perfil_id = p.id 
+                LEFT JOIN perfiles p ON u.perfil_id = p.id 
                 WHERE u.email = ? AND u.activo = 1";
         
         $stmt = $this->db->prepare($sql);
@@ -33,17 +149,19 @@ class Usuario {
      */
     public function listar($limite = null, $offset = 0) {
         try {
+            // Usar consulta directa ya que no sabemos si existe la vista
             $sql = "SELECT 
-                        usuario_id as id,
-                        nombre_usuario,
-                        nombre_completo,
-                        email_acceso as email,
-                        telefono,
-                        perfil_nombre,
-                        CASE WHEN usuario_activo = 1 THEN 'Activo' ELSE 'Inactivo' END as estado,
-                        ultimo_acceso
-                    FROM vista_usuarios_completa 
-                    ORDER BY nombre_completo ASC";
+                        u.persona_id as id,
+                        u.nombre_usuario,
+                        u.email,
+                        u.domicilio,
+                        u.ultimo_acceso,
+                        u.fecha_creacion,
+                        CASE WHEN u.activo = 1 THEN 'Activo' ELSE 'Inactivo' END as estado,
+                        COALESCE(p.nombre, 'Administrador') as perfil_nombre
+                    FROM usuarios u
+                    LEFT JOIN perfiles p ON u.perfil_id = p.id
+                    ORDER BY u.nombre_usuario ASC";
             
             if ($limite !== null) {
                 $sql .= " LIMIT ? OFFSET ?";
@@ -61,6 +179,164 @@ class Usuario {
             
         } catch (PDOException $e) {
             error_log("Error al listar usuarios: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    /**
+     * ✅ NUEVO: Obtener usuario por ID
+     */
+    public function obtenerPorId($id) {
+        try {
+            $sql = "SELECT 
+                        u.persona_id as id,
+                        u.nombre_usuario,
+                        u.email,
+                        u.domicilio,
+                        u.activo,
+                        u.perfil_id,
+                        u.ultimo_acceso,
+                        u.fecha_creacion,
+                        COALESCE(p.nombre, 'Administrador') as perfil_nombre
+                    FROM usuarios u
+                    LEFT JOIN perfiles p ON u.perfil_id = p.id
+                    WHERE u.persona_id = ?";
+            
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$id]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+            
+        } catch (PDOException $e) {
+            error_log("Error al obtener usuario por ID: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * ✅ NUEVO: Actualizar usuario
+     */
+    public function actualizar($id, $datos) {
+        try {
+            // Construir la query dinámicamente según los campos proporcionados
+            $campos = [];
+            $valores = [];
+            
+            if (isset($datos['nombre_usuario'])) {
+                $campos[] = "nombre_usuario = ?";
+                $valores[] = $datos['nombre_usuario'];
+            }
+            
+            if (isset($datos['email'])) {
+                $campos[] = "email = ?";
+                $valores[] = $datos['email'];
+            }
+            
+            if (isset($datos['password']) && !empty($datos['password'])) {
+                $campos[] = "password = ?";
+                $valores[] = password_hash($datos['password'], PASSWORD_DEFAULT);
+            }
+            
+            if (isset($datos['perfil_id'])) {
+                $campos[] = "perfil_id = ?";
+                $valores[] = $datos['perfil_id'];
+            }
+            
+            if (isset($datos['activo'])) {
+                $campos[] = "activo = ?";
+                $valores[] = $datos['activo'];
+            }
+            
+            if (empty($campos)) {
+                return ['success' => false, 'message' => 'No hay campos para actualizar'];
+            }
+            
+            $valores[] = $id; // Para la condición WHERE
+            
+            $sql = "UPDATE usuarios SET " . implode(', ', $campos) . " WHERE persona_id = ?";
+            $stmt = $this->db->prepare($sql);
+            $resultado = $stmt->execute($valores);
+            
+            if ($resultado) {
+                return ['success' => true, 'message' => 'Usuario actualizado correctamente'];
+            } else {
+                return ['success' => false, 'message' => 'Error al actualizar el usuario'];
+            }
+            
+        } catch (PDOException $e) {
+            error_log("Error al actualizar usuario: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Error interno del servidor'];
+        }
+    }
+    
+    /**
+     * ✅ NUEVO: Eliminar usuario (baja lógica)
+     */
+    public function eliminar($id) {
+        try {
+            $sql = "UPDATE usuarios SET activo = 0 WHERE persona_id = ?";
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([$id]);
+            
+        } catch (PDOException $e) {
+            error_log("Error al eliminar usuario: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Dar de baja usuario (baja lógica)
+     */
+    public function darDeBaja($id) {
+        try {
+            $sql = "UPDATE usuarios SET activo = 0 WHERE persona_id = ?";
+            $stmt = $this->db->prepare($sql);
+            $resultado = $stmt->execute([$id]);
+            
+            if ($resultado) {
+                return ['success' => true, 'message' => 'Usuario dado de baja correctamente'];
+            } else {
+                return ['success' => false, 'message' => 'Error al dar de baja el usuario'];
+            }
+            
+        } catch (PDOException $e) {
+            error_log("Error al dar de baja usuario: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Error interno del servidor'];
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Reactivar usuario
+     */
+    public function reactivar($id) {
+        try {
+            $sql = "UPDATE usuarios SET activo = 1 WHERE persona_id = ?";
+            $stmt = $this->db->prepare($sql);
+            $resultado = $stmt->execute([$id]);
+            
+            if ($resultado) {
+                return ['success' => true, 'message' => 'Usuario reactivado correctamente'];
+            } else {
+                return ['success' => false, 'message' => 'Error al reactivar el usuario'];
+            }
+            
+        } catch (PDOException $e) {
+            error_log("Error al reactivar usuario: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Error interno del servidor'];
+        }
+    }
+    
+    /**
+     * ✅ NUEVO: Obtener perfiles disponibles
+     */
+    public function obtenerPerfiles() {
+        try {
+            $sql = "SELECT id, nombre FROM perfiles WHERE activo = 1 ORDER BY nombre";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+        } catch (PDOException $e) {
+            error_log("Error al obtener perfiles: " . $e->getMessage());
             return [];
         }
     }
@@ -436,6 +712,74 @@ class Usuario {
                 'success' => false,
                 'message' => 'Error interno del servidor'
             ];
+        }
+    }
+
+    /**
+     * Crear usuario para cliente existente (flujo correcto de negocio)
+     */
+    public function crearDesdeClienteExistente($datos) {
+        try {
+            // Validar que la persona/cliente existe
+            $sqlVerificar = "SELECT p.id, p.email, p.nombres, p.apellidos 
+                           FROM personas p 
+                           INNER JOIN clientes c ON p.id = c.id 
+                           WHERE p.id = ? AND p.activo = 1 AND c.activo = 1";
+            $stmtVerificar = $this->db->prepare($sqlVerificar);
+            $stmtVerificar->execute([$datos['persona_id']]);
+            $persona = $stmtVerificar->fetch();
+
+            if (!$persona) {
+                return ['success' => false, 'message' => 'Cliente no encontrado o inactivo'];
+            }
+
+            // Validar que no tenga ya un usuario
+            $sqlUsuarioExiste = "SELECT id FROM usuarios WHERE persona_id = ? AND activo = 1";
+            $stmtUsuarioExiste = $this->db->prepare($sqlUsuarioExiste);
+            $stmtUsuarioExiste->execute([$datos['persona_id']]);
+            
+            if ($stmtUsuarioExiste->fetch()) {
+                return ['success' => false, 'message' => 'Este cliente ya tiene acceso al sistema'];
+            }
+
+            // Validar nombre de usuario único
+            $sqlNombreExiste = "SELECT id FROM usuarios WHERE nombre_usuario = ? AND activo = 1";
+            $stmtNombreExiste = $this->db->prepare($sqlNombreExiste);
+            $stmtNombreExiste->execute([$datos['nombre_usuario']]);
+            
+            if ($stmtNombreExiste->fetch()) {
+                return ['success' => false, 'message' => 'El nombre de usuario ya está en uso'];
+            }
+
+            $this->db->beginTransaction();
+
+            // Hashear contraseña
+            $passwordHash = password_hash($datos['password'], PASSWORD_DEFAULT);
+
+            // Crear usuario
+            $sql = "INSERT INTO usuarios (persona_id, nombre_usuario, email, password, activo, perfil_id) 
+                   VALUES (?, ?, ?, ?, 1, ?)";
+            $stmt = $this->db->prepare($sql);
+            $resultado = $stmt->execute([
+                $datos['persona_id'],
+                $datos['nombre_usuario'],
+                $persona['email'], // Usar email del cliente
+                $passwordHash,
+                $datos['perfil_id'] ?? 2 // Perfil cliente por defecto
+            ]);
+
+            if (!$resultado) {
+                throw new Exception('Error al crear usuario en la base de datos');
+            }
+
+            $usuarioId = $this->db->lastInsertId();
+            $this->db->commit();
+
+            return $usuarioId;
+
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            return ['success' => false, 'message' => 'Error al crear usuario: ' . $e->getMessage()];
         }
     }
 }
