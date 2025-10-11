@@ -3,94 +3,12 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($titulo ?? 'Gestión de Perfiles') ?> - Sistema Premoldeado</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        
-        .page-header {
-            background: linear-gradient(135deg, #6f42c1 0%, #007bff 100%);
-            color: white;
-            border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        .card-header {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            border-radius: 15px 15px 0 0 !important;
-            padding: 1.25rem;
-        }
-        
-        .btn {
-            border-radius: 10px;
-            font-weight: 500;
-        }
-        
-        .table {
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        
-        .table th {
-            background-color: #f8f9fa;
-        }
-        
-        /* Estilos para tooltips */
-        .tooltip {
-            font-size: 0.875rem;
-        }
-        
-        .tooltip-inner {
-            max-width: 300px;
-            text-align: left;
-            background-color: #212529;
-            border-radius: 8px;
-            padding: 0.75rem;
-        }
-        
-        .badge[data-bs-toggle="tooltip"] {
-            transition: all 0.2s ease;
-        }
-        
-        .badge[data-bs-toggle="tooltip"]:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,123,255,0.3);
-            border-top: none;
-            color: #495057;
-            font-weight: 600;
-        }
-        
-        .badge {
-            border-radius: 20px;
-            padding: 0.5em 0.75em;
-        }
-        
-        /* Estilos para perfiles protegidos */
-        .perfil-critico {
-            background-color: #fff3cd !important;
-            border-left: 4px solid #ffc107;
-        }
-        
-        .btn-protegido {
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-    </style>
+    
+    <?php 
+    // Incluir estilos y scripts comunes
+    include_once __DIR__ . '/../../../components/common-styles.php';
+    ?>
 </head>
 <body>
     <div class="container-fluid py-4">
@@ -146,7 +64,7 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-hover" id="perfiles_table">
+                            <table class="table table-hover" id="perfiles_table" data-table-type="perfiles">
                                 <thead>
                                     <tr>
                                         <th class="text-center">ID</th>
@@ -279,37 +197,13 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-    
+    <!-- Script personalizado para esta página -->
     <script>
     $(document).ready(function() {
-        // Inicializar DataTable
-        $('#perfiles_table').DataTable({
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/Spanish.json"
-            },
-            "pageLength": 15,
-            "order": [[0, "asc"]],
-            "responsive": true,
-            "columnDefs": [
-                { "targets": [0, 2, 3, 4, 5], "className": "text-center" }
-            ]
-        });
+        // La inicialización de DataTable se hace automáticamente por el data-table-type="perfiles"
+        // Los tooltips se inicializan automáticamente por common-styles.php
         
-        // Inicializar todos los tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl, {
-                html: true,
-                delay: { "show": 300, "hide": 100 }
-            });
-        });
-        
-        // Confirmación de desactivación - Ya manejado por onclick inline
+        console.log('✅ Página de perfiles cargada correctamente');
     });
     </script>
 </body>
