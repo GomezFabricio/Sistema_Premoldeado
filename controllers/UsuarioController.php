@@ -165,17 +165,23 @@ class UsuarioController extends BaseController {
                 'email' => $_POST['email'] ?? '',
                 'password' => $_POST['password'] ?? '',
                 'domicilio' => $_POST['domicilio'] ?? '',
-                'perfil_id' => (int)($_POST['perfil_id'] ?? 1),
+                'perfiles_ids' => $_POST['perfiles_ids'] ?? [], // ✅ NUEVO: Array de perfiles
                 'activo' => 1
             ]);
             
+            // Validar que se seleccionó al menos un perfil
+            if (empty($datos['perfiles_ids']) || !is_array($datos['perfiles_ids'])) {
+                $this->establecerMensaje('Debe seleccionar al menos un perfil para el usuario', 'error');
+                $this->crear();
+                return;
+            }
+
             // Usar función del BaseController para validación
             $reglas = [
                 'nombre_usuario' => ['required' => true, 'min_length' => 3, 'max_length' => 50],
                 'email' => ['required' => true, 'type' => 'email', 'max_length' => 150],
                 'password' => ['required' => true, 'min_length' => 8, 'max_length' => 255],
-                'domicilio' => ['max_length' => 200],
-                'perfil_id' => ['required' => true, 'type' => 'numeric']
+                'domicilio' => ['max_length' => 200]
             ];
             
             $errores = $this->validarDatos($datos, $reglas);
@@ -229,8 +235,15 @@ class UsuarioController extends BaseController {
                 return;
             }
             
+            // ✅ NUEVO: Obtener perfiles disponibles y asignados al usuario
+            $perfiles = $this->usuarioModel->obtenerPerfiles();
+            $perfilesUsuario = $this->usuarioModel->obtenerPerfilesDelUsuario($id);
+            $perfilesAsignados = array_column($perfilesUsuario, 'id');
+            
             $data = [
                 'usuario' => $usuario,
+                'perfiles' => $perfiles,
+                'perfiles_asignados' => $perfilesAsignados, // ✅ IDs de perfiles ya asignados
                 'titulo' => 'Editar Usuario',
                 'usuario_logueado' => $this->usuario
             ];
@@ -255,16 +268,22 @@ class UsuarioController extends BaseController {
                 'email' => trim($_POST['email'] ?? ''),
                 'password' => $_POST['password'] ?? '',
                 'domicilio' => trim($_POST['domicilio'] ?? ''),
-                'perfil_id' => (int)($_POST['perfil_id'] ?? 1),
+                'perfiles_ids' => $_POST['perfiles_ids'] ?? [], // ✅ NUEVO: Array de perfiles
                 'activo' => (int)($_POST['activo'] ?? 1)
             ];
             
+            // Validar que se seleccionó al menos un perfil
+            if (empty($datos['perfiles_ids']) || !is_array($datos['perfiles_ids'])) {
+                $this->establecerMensaje('Debe seleccionar al menos un perfil para el usuario', 'error');
+                $this->editarUsuario($id);
+                return;
+            }
+
             // Usar función del BaseController para validación
             $reglas = [
                 'nombre_usuario' => ['required' => true, 'min_length' => 3, 'max_length' => 50],
                 'email' => ['required' => true, 'type' => 'email', 'max_length' => 150],
-                'domicilio' => ['max_length' => 200],
-                'perfil_id' => ['required' => true, 'type' => 'numeric']
+                'domicilio' => ['max_length' => 200]
             ];
             
             if (!empty($datos['password'])) {
@@ -298,7 +317,19 @@ class UsuarioController extends BaseController {
             $resultado = $this->usuarioModel->actualizar($id, $datos);
             
             if ($resultado['success']) {
-                $this->redirectToController('Usuario', 'index', [], 'Usuario actualizado exitosamente', 'success');
+                // ✅ NUEVO: Actualizar perfiles del usuario
+                $resultadoPerfiles = $this->usuarioModel->asignarPerfilesAUsuario(
+                    $id, 
+                    $datos['perfiles_ids'], 
+                    $this->usuario['id'] // Usuario que realiza la modificación
+                );
+                
+                if ($resultadoPerfiles['success']) {
+                    $this->redirectToController('Usuario', 'index', [], 'Usuario y perfiles actualizados exitosamente', 'success');
+                } else {
+                    $this->establecerMensaje('Usuario actualizado, pero error en perfiles: ' . $resultadoPerfiles['message'], 'warning');
+                    $this->editarUsuario($id);
+                }
             } else {
                 $this->establecerMensaje($resultado['message'], 'error');
                 $this->editarUsuario($id);

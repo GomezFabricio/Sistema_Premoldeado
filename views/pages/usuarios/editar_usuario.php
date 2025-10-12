@@ -164,28 +164,47 @@
                                     </small>
                                 </div>
                                 
-                                <div class="col-md-6 mb-3">
-                                    <label for="perfil_id" class="form-label">
-                                        Perfil <span class="text-danger">*</span>
+                                <!-- ✅ NUEVO: Perfiles Múltiples -->
+                                <div class="col-12 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-user-shield me-2"></i>Perfiles Asignados <span class="text-danger">*</span>
                                     </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="fas fa-user-shield"></i>
-                                        </span>
-                                        <select class="form-select" id="perfil_id" name="perfil_id" required>
-                                            <option value="">Seleccionar perfil...</option>
-                                            <?php if (isset($perfiles) && is_array($perfiles)): ?>
-                                                <?php foreach ($perfiles as $perfil): ?>
-                                                    <option value="<?= $perfil['id'] ?>" 
-                                                            <?= $usuario['perfil_id'] == $perfil['id'] ? 'selected' : '' ?>>
-                                                        <?= htmlspecialchars($perfil['nombre']) ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            <?php else: ?>
-                                                <option value="1" <?= $usuario['perfil_id'] == 1 ? 'selected' : '' ?>>Administrador</option>
-                                                <option value="2" <?= $usuario['perfil_id'] == 2 ? 'selected' : '' ?>>Cliente</option>
-                                            <?php endif; ?>
-                                        </select>
+                                    <div class="card border-light">
+                                        <div class="card-body">
+                                            <p class="text-muted small mb-3">Seleccione uno o más perfiles para este usuario:</p>
+                                            <div class="row">
+                                                <?php if (!empty($perfiles) && is_array($perfiles)): ?>
+                                                    <?php foreach ($perfiles as $perfil): ?>
+                                                        <?php 
+                                                        $isChecked = isset($perfiles_asignados) && in_array($perfil['id'], $perfiles_asignados);
+                                                        ?>
+                                                        <div class="col-md-6 col-lg-4 mb-2">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" 
+                                                                       type="checkbox" 
+                                                                       name="perfiles_ids[]" 
+                                                                       value="<?= htmlspecialchars($perfil['id']) ?>" 
+                                                                       id="perfil_<?= htmlspecialchars($perfil['id']) ?>"
+                                                                       <?= $isChecked ? 'checked' : '' ?>>
+                                                                <label class="form-check-label" for="perfil_<?= htmlspecialchars($perfil['id']) ?>">
+                                                                    <strong><?= htmlspecialchars($perfil['nombre']) ?></strong>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <div class="col-12">
+                                                        <div class="alert alert-warning">
+                                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                                            No hay perfiles disponibles. Contacte al administrador.
+                                                        </div>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="invalid-feedback" id="perfiles-error" style="display: none;">
+                                                Debe seleccionar al menos un perfil.
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 
@@ -266,6 +285,17 @@
                 e.preventDefault();
                 alert('La contraseña debe tener al menos 8 caracteres');
                 return false;
+            }
+
+            // ✅ NUEVO: Validar que se seleccione al menos un perfil
+            const perfilesSeleccionados = $('input[name="perfiles_ids[]"]:checked').length;
+            if (perfilesSeleccionados === 0) {
+                e.preventDefault();
+                $('#perfiles-error').show();
+                alert('Debe seleccionar al menos un perfil para el usuario');
+                return false;
+            } else {
+                $('#perfiles-error').hide();
             }
         });
     });

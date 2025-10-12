@@ -69,9 +69,9 @@ class Usuario {
             // 2. Hashear la contraseña
             $passwordHash = password_hash($password, PASSWORD_DEFAULT);
             
-            // 3. Insertar usuario con persona_id
-            $sql = "INSERT INTO usuarios (persona_id, nombre_usuario, email, password, domicilio, perfil_id, activo) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+            // 3. Insertar usuario SIN perfil_id (ya no existe esa columna)
+            $sql = "INSERT INTO usuarios (persona_id, nombre_usuario, email, password, domicilio, activo) 
+                    VALUES (?, ?, ?, ?, ?, ?)";
             $stmt = $this->db->prepare($sql);
             $resultado = $stmt->execute([
                 $personaId,
@@ -79,25 +79,35 @@ class Usuario {
                 $datos['email'],
                 $passwordHash,
                 $datos['domicilio'] ?? null,
-                $datos['perfil_id'] ?? 1,
                 $datos['activo'] ?? 1
             ]);
             
-            if ($resultado) {
-                $usuarioId = $this->db->lastInsertId();
-                $this->db->commit();
-                return [
-                    'success' => true,
-                    'message' => 'Usuario creado correctamente',
-                    'id' => $usuarioId
-                ];
-            } else {
+            if (!$resultado) {
                 $this->db->rollBack();
                 return [
                     'success' => false,
                     'message' => 'Error al crear el usuario.'
                 ];
             }
+
+            $usuarioId = $this->db->lastInsertId();
+
+            // 4. Asignar perfiles si se proporcionaron
+            if (!empty($datos['perfiles_ids']) && is_array($datos['perfiles_ids'])) {
+                $sqlPerfil = "INSERT INTO usuarios_perfiles (usuario_id, perfil_id, activo) VALUES (?, ?, 1)";
+                $stmtPerfil = $this->db->prepare($sqlPerfil);
+                
+                foreach ($datos['perfiles_ids'] as $perfil_id) {
+                    $stmtPerfil->execute([$usuarioId, $perfil_id]);
+                }
+            }
+
+            $this->db->commit();
+            return [
+                'success' => true,
+                'message' => 'Usuario creado correctamente',
+                'id' => $usuarioId
+            ];
             
         } catch (PDOException $e) {
             $this->db->rollBack();
@@ -128,10 +138,18 @@ class Usuario {
     }
     
     public function autenticar($email, $password) {
-        $sql = "SELECT u.persona_id as id, u.nombre_usuario, u.email, u.password, u.activo, u.perfil_id, 
-                       COALESCE(p.nombre, 'Administrador') as perfil_nombre 
+        $sql = "SELECT u.persona_id as id, u.nombre_usuario, u.email, u.password, u.activo,
+                       -- Obtener primer perfil como perfil principal (retrocompatibilidad)
+                       (SELECT p.id FROM perfiles p 
+                        INNER JOIN usuarios_perfiles up ON p.id = up.perfil_id
+                        WHERE up.usuario_id = u.id AND up.activo = 1 AND p.estado = 1
+                        ORDER BY p.nombre LIMIT 1) as perfil_id,
+                       -- Concatenar nombres de perfiles
+                       (SELECT GROUP_CONCAT(p.nombre ORDER BY p.nombre SEPARATOR ', ')
+                        FROM perfiles p 
+                        INNER JOIN usuarios_perfiles up ON p.id = up.perfil_id
+                        WHERE up.usuario_id = u.id AND up.activo = 1 AND p.estado = 1) as perfil_nombre
                 FROM usuarios u 
-                LEFT JOIN perfiles p ON u.perfil_id = p.id 
                 WHERE u.email = ? AND u.activo = 1";
         
         $stmt = $this->db->prepare($sql);
@@ -139,6 +157,11 @@ class Usuario {
         $usuario = $stmt->fetch();
         
         if ($usuario && password_verify($password, $usuario['password'])) {
+            // Si no tiene perfiles, asignar valores por defecto
+            if (empty($usuario['perfil_id'])) {
+                $usuario['perfil_id'] = null;
+                $usuario['perfil_nombre'] = 'Sin perfiles asignados';
+            }
             return $usuario;
         }
         return false;
@@ -153,7 +176,7 @@ class Usuario {
      */
     public function listar($limite = null, $offset = 0) {
         try {
-            // Usar consulta directa ya que no sabemos si existe la vista
+            // ✅ CORREGIDO: Usar nueva estructura con múltiples perfiles
             $sql = "SELECT 
                         u.persona_id as id,
                         u.nombre_usuario,
@@ -162,10 +185,16 @@ class Usuario {
                         u.ultimo_acceso,
                         u.fecha_creacion,
                         CASE WHEN u.activo = 1 THEN 'Activo' ELSE 'Inactivo' END as estado,
-                        COALESCE(p.nombre, 'Administrador') as perfil_nombre
+                        -- Concatenar todos los perfiles del usuario
+                        COALESCE(
+                            (SELECT GROUP_CONCAT(p.nombre ORDER BY p.nombre SEPARATOR ', ')
+                             FROM perfiles p 
+                             INNER JOIN usuarios_perfiles up ON p.id = up.perfil_id
+                             WHERE up.usuario_id = u.id AND up.activo = 1 AND p.estado = 1),
+                            'Sin perfiles'
+                        ) as perfil_nombre
                     FROM usuarios u
-                    LEFT JOIN perfiles p ON u.perfil_id = p.id
-                    ORDER BY u.nombre_usuario ASC";
+                    ORDER BY u.activo DESC, u.nombre_usuario ASC";
             
             if ($limite !== null) {
                 $sql .= " LIMIT ? OFFSET ?";
@@ -192,18 +221,24 @@ class Usuario {
      */
     public function obtenerPorId($id) {
         try {
+            // ✅ CORREGIDO: Usar nueva estructura sin perfil_id
             $sql = "SELECT 
                         u.persona_id as id,
                         u.nombre_usuario,
                         u.email,
                         u.domicilio,
                         u.activo,
-                        u.perfil_id,
                         u.ultimo_acceso,
                         u.fecha_creacion,
-                        COALESCE(p.nombre, 'Administrador') as perfil_nombre
+                        -- Obtener todos los perfiles del usuario
+                        COALESCE(
+                            (SELECT GROUP_CONCAT(p.nombre ORDER BY p.nombre SEPARATOR ', ')
+                             FROM perfiles p 
+                             INNER JOIN usuarios_perfiles up ON p.id = up.perfil_id
+                             WHERE up.usuario_id = u.id AND up.activo = 1 AND p.estado = 1),
+                            'Sin perfiles'
+                        ) as perfil_nombre
                     FROM usuarios u
-                    LEFT JOIN perfiles p ON u.perfil_id = p.id
                     WHERE u.persona_id = ?";
             
             $stmt = $this->db->prepare($sql);
@@ -245,10 +280,7 @@ class Usuario {
                 $valores[] = $datos['domicilio'];
             }
             
-            if (isset($datos['perfil_id'])) {
-                $campos[] = "perfil_id = ?";
-                $valores[] = $datos['perfil_id'];
-            }
+            // ✅ CORREGIDO: Los perfiles ahora se manejan por separado con asignarPerfilesAUsuario()
             
             if (isset($datos['activo'])) {
                 $campos[] = "activo = ?";
@@ -423,6 +455,138 @@ class Usuario {
     }
     
     /**
+     * ✅ NUEVO: Obtener módulos de TODOS los perfiles de un usuario (sin duplicados)
+     * 
+     * @param int $usuario_id ID del usuario
+     * @return array Array de módulos únicos del usuario
+     */
+    public function obtenerModulosPorUsuario($usuario_id) {
+        try {
+            $db = Database::getInstance()->getConnection();
+            
+            // ✅ CORREGIDO: Obtener el usuarios.id correcto basado en persona_id
+            $sqlUsuarioId = "SELECT id FROM usuarios WHERE persona_id = ?";
+            $stmtUsuarioId = $db->prepare($sqlUsuarioId);
+            $stmtUsuarioId->execute([$usuario_id]);
+            $usuario_real_id = $stmtUsuarioId->fetchColumn();
+            
+            if (!$usuario_real_id) {
+                return [];
+            }
+            
+            $sql = "SELECT DISTINCT m.id, m.nombre 
+                    FROM modulos m 
+                    INNER JOIN perfiles_modulos pm ON m.id = pm.modulos_id 
+                    INNER JOIN usuarios_perfiles up ON pm.perfiles_id = up.perfil_id
+                    WHERE up.usuario_id = ? 
+                    AND up.activo = 1
+                    ORDER BY m.nombre ASC";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$usuario_real_id]);
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error al obtener módulos por usuario: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Obtener perfiles de un usuario específico
+     * 
+     * @param int $usuario_id ID del usuario
+     * @return array Array de perfiles del usuario
+     */
+    public function obtenerPerfilesDelUsuario($usuario_id) {
+        try {
+            $db = Database::getInstance()->getConnection();
+            
+            // ✅ CORREGIDO: Obtener el usuarios.id correcto basado en persona_id
+            $sqlUsuarioId = "SELECT id FROM usuarios WHERE persona_id = ?";
+            $stmtUsuarioId = $db->prepare($sqlUsuarioId);
+            $stmtUsuarioId->execute([$usuario_id]);
+            $usuario_real_id = $stmtUsuarioId->fetchColumn();
+            
+            if (!$usuario_real_id) {
+                return [];
+            }
+            
+            $sql = "SELECT p.id, p.nombre, up.fecha_asignacion
+                    FROM perfiles p 
+                    INNER JOIN usuarios_perfiles up ON p.id = up.perfil_id
+                    WHERE up.usuario_id = ? 
+                    AND up.activo = 1 
+                    AND p.estado = 1
+                    ORDER BY p.nombre ASC";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$usuario_real_id]);
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error al obtener perfiles del usuario: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * ✅ NUEVO: Asignar múltiples perfiles a un usuario
+     * 
+     * @param int $usuario_id ID del usuario
+     * @param array $perfiles_ids Array de IDs de perfiles
+     * @param int $asignado_por ID del usuario que asigna
+     * @return array Resultado de la operación
+     */
+    public function asignarPerfilesAUsuario($usuario_id, $perfiles_ids, $asignado_por = null) {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $db->beginTransaction();
+
+            // ✅ CORREGIDO: Obtener el usuarios.id correcto basado en persona_id
+            $sqlUsuarioId = "SELECT id FROM usuarios WHERE persona_id = ?";
+            $stmtUsuarioId = $db->prepare($sqlUsuarioId);
+            $stmtUsuarioId->execute([$usuario_id]);
+            $usuario_real_id = $stmtUsuarioId->fetchColumn();
+            
+            if (!$usuario_real_id) {
+                throw new PDOException("Usuario no encontrado con persona_id: " . $usuario_id);
+            }
+
+            // Primero desactivar todas las asignaciones actuales
+            $sqlDesactivar = "UPDATE usuarios_perfiles SET activo = 0 WHERE usuario_id = ?";
+            $stmtDesactivar = $db->prepare($sqlDesactivar);
+            $stmtDesactivar->execute([$usuario_real_id]);
+
+            // Luego asignar los nuevos perfiles
+            $sqlAsignar = "INSERT INTO usuarios_perfiles (usuario_id, perfil_id, asignado_por, activo) 
+                          VALUES (?, ?, ?, 1)
+                          ON DUPLICATE KEY UPDATE activo = 1, asignado_por = ?, fecha_asignacion = CURRENT_TIMESTAMP";
+
+            $stmtAsignar = $db->prepare($sqlAsignar);
+
+            foreach ($perfiles_ids as $perfil_id) {
+                $stmtAsignar->execute([$usuario_real_id, $perfil_id, $asignado_por, $asignado_por]);
+            }
+
+            $db->commit();
+            
+            return [
+                'success' => true,
+                'message' => 'Perfiles asignados correctamente'
+            ];
+
+        } catch (PDOException $e) {
+            $db->rollBack();
+            error_log("Error al asignar perfiles a usuario: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Error al asignar perfiles: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * Método de instancia para obtener módulos por perfil - SOLO DATOS
      * El controlador se encarga de agregar URLs y configuración
      * 
@@ -446,15 +610,16 @@ class Usuario {
     public static function obtenerTodosPerfiles() {
         try {
             $db = Database::getInstance()->getConnection();
+            // ✅ CORREGIDO: Usar nueva estructura usuarios_perfiles
             $sql = "SELECT 
                         p.id, 
                         p.nombre,
                         p.estado,
                         COUNT(DISTINCT pm.modulos_id) as total_modulos,
-                        COUNT(DISTINCT u.id) as total_usuarios
+                        COUNT(DISTINCT up.usuario_id) as total_usuarios
                     FROM perfiles p
                     LEFT JOIN perfiles_modulos pm ON p.id = pm.perfiles_id
-                    LEFT JOIN usuarios u ON p.id = u.perfil_id AND u.activo = 1
+                    LEFT JOIN usuarios_perfiles up ON p.id = up.perfil_id AND up.activo = 1
                     GROUP BY p.id, p.nombre, p.estado
                     ORDER BY p.estado DESC, p.nombre ASC";
             
@@ -673,8 +838,11 @@ class Usuario {
             
             $db = Database::getInstance()->getConnection();
             
-            // Verificar si hay usuarios activos asociados a este perfil
-            $sqlVerificar = "SELECT COUNT(*) as total FROM usuarios WHERE perfil_id = ? AND activo = 1";
+            // ✅ CORREGIDO: Verificar usuarios usando nueva tabla usuarios_perfiles
+            $sqlVerificar = "SELECT COUNT(DISTINCT up.usuario_id) as total 
+                           FROM usuarios_perfiles up 
+                           INNER JOIN usuarios u ON up.usuario_id = u.id 
+                           WHERE up.perfil_id = ? AND up.activo = 1 AND u.activo = 1";
             $stmtVerificar = $db->prepare($sqlVerificar);
             $stmtVerificar->execute([$id]);
             $resultado = $stmtVerificar->fetch();
@@ -905,16 +1073,15 @@ class Usuario {
             // Hashear contraseña
             $passwordHash = password_hash($datos['password'], PASSWORD_DEFAULT);
 
-            // Crear usuario
-            $sql = "INSERT INTO usuarios (persona_id, nombre_usuario, email, password, activo, perfil_id) 
-                   VALUES (?, ?, ?, ?, 1, ?)";
+            // Crear usuario SIN perfil_id
+            $sql = "INSERT INTO usuarios (persona_id, nombre_usuario, email, password, activo) 
+                   VALUES (?, ?, ?, ?, 1)";
             $stmt = $this->db->prepare($sql);
             $resultado = $stmt->execute([
                 $datos['persona_id'],
                 $datos['nombre_usuario'],
                 $persona['email'], // Usar email del cliente
-                $passwordHash,
-                $datos['perfil_id'] ?? 2 // Perfil cliente por defecto
+                $passwordHash
             ]);
 
             if (!$resultado) {
@@ -922,6 +1089,12 @@ class Usuario {
             }
 
             $usuarioId = $this->db->lastInsertId();
+
+            // Asignar perfil por defecto (cliente)
+            $perfilPorDefecto = $datos['perfil_id'] ?? 2; // Perfil cliente por defecto
+            $sqlPerfil = "INSERT INTO usuarios_perfiles (usuario_id, perfil_id, activo) VALUES (?, ?, 1)";
+            $stmtPerfil = $this->db->prepare($sqlPerfil);
+            $stmtPerfil->execute([$usuarioId, $perfilPorDefecto]);
             $this->db->commit();
 
             return $usuarioId;

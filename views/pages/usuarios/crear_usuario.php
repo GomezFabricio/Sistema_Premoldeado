@@ -200,30 +200,42 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Perfil -->
-                                    <div class="col-md-6 mb-3">
-                                        <label for="perfil_id" class="form-label">
-                                            Perfil <span class="text-danger">*</span>
+                                    <!-- ✅ NUEVO: Perfiles Múltiples -->
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label">
+                                            <i class="fas fa-user-shield me-2"></i>Perfiles Asignados <span class="text-danger">*</span>
                                         </label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">
-                                                <i class="fas fa-user-shield"></i>
-                                            </span>
-                                            <select class="form-select" id="perfil_id" name="perfil_id" required>
-                                                <option value="">Seleccione un perfil...</option>
-                                                <?php if (!empty($perfiles) && is_array($perfiles)): ?>
-                                                    <?php foreach ($perfiles as $perfil): ?>
-                                                        <option value="<?= htmlspecialchars($perfil['id']) ?>">
-                                                            <?= htmlspecialchars($perfil['nombre']) ?>
-                                                        </option>
-                                                    <?php endforeach; ?>
-                                                <?php else: ?>
-                                                    <option value="1">Administrador (Por defecto)</option>
-                                                    <option value="2">Cliente (Por defecto)</option>
-                                                <?php endif; ?>
-                                            </select>
-                                            <div class="invalid-feedback">
-                                                Por favor, seleccione un perfil.
+                                        <div class="card border-light">
+                                            <div class="card-body">
+                                                <p class="text-muted small mb-3">Seleccione uno o más perfiles para este usuario:</p>
+                                                <div class="row">
+                                                    <?php if (!empty($perfiles) && is_array($perfiles)): ?>
+                                                        <?php foreach ($perfiles as $perfil): ?>
+                                                            <div class="col-md-6 col-lg-4 mb-2">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" 
+                                                                           type="checkbox" 
+                                                                           name="perfiles_ids[]" 
+                                                                           value="<?= htmlspecialchars($perfil['id']) ?>" 
+                                                                           id="perfil_<?= htmlspecialchars($perfil['id']) ?>">
+                                                                    <label class="form-check-label" for="perfil_<?= htmlspecialchars($perfil['id']) ?>">
+                                                                        <strong><?= htmlspecialchars($perfil['nombre']) ?></strong>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        <?php endforeach; ?>
+                                                    <?php else: ?>
+                                                        <div class="col-12">
+                                                            <div class="alert alert-warning">
+                                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                                No hay perfiles disponibles. Contacte al administrador.
+                                                            </div>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="invalid-feedback" id="perfiles-error" style="display: none;">
+                                                    Debe seleccionar al menos un perfil.
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -348,6 +360,17 @@
                 $('#password')[0].setCustomValidity('La contraseña debe tener al menos 8 caracteres');
                 $('#password').addClass('is-invalid');
                 return false;
+            }
+
+            // ✅ NUEVO: Validar que se seleccione al menos un perfil
+            const perfilesSeleccionados = $('input[name="perfiles_ids[]"]:checked').length;
+            if (perfilesSeleccionados === 0) {
+                e.preventDefault();
+                $('#perfiles-error').show();
+                alert('Debe seleccionar al menos un perfil para el usuario');
+                return false;
+            } else {
+                $('#perfiles-error').hide();
             }
         });
     });

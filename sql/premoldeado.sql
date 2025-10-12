@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 11-10-2025 a las 19:16:23
+-- Tiempo de generación: 12-10-2025 a las 16:44:07
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -323,7 +323,10 @@ CREATE TABLE `perfiles` (
 
 INSERT INTO `perfiles` (`id`, `nombre`, `estado`) VALUES
 (1, 'Administrador', 1),
-(2, 'Cliente', 1);
+(2, 'Cliente', 1),
+(4, 'Vendedor', 1),
+(5, 'Gestor de inventario', 1),
+(6, 'Operador', 1);
 
 -- --------------------------------------------------------
 
@@ -349,7 +352,10 @@ INSERT INTO `perfiles_modulos` (`perfiles_id`, `modulos_id`) VALUES
 (1, 6),
 (1, 7),
 (1, 8),
-(1, 9);
+(1, 9),
+(6, 3),
+(6, 5),
+(6, 6);
 
 -- --------------------------------------------------------
 
@@ -577,7 +583,6 @@ CREATE TABLE `usuarios` (
   `email` varchar(150) NOT NULL,
   `password` varchar(255) NOT NULL,
   `domicilio` varchar(200) DEFAULT NULL,
-  `perfil_id` int(11) NOT NULL,
   `ultimo_acceso` datetime DEFAULT NULL,
   `intentos_fallidos` int(11) NOT NULL DEFAULT 0,
   `bloqueado_hasta` datetime DEFAULT NULL,
@@ -589,13 +594,39 @@ CREATE TABLE `usuarios` (
 -- Volcado de datos para la tabla `usuarios`
 --
 
-INSERT INTO `usuarios` (`id`, `persona_id`, `nombre_usuario`, `email`, `password`, `domicilio`, `perfil_id`, `ultimo_acceso`, `intentos_fallidos`, `bloqueado_hasta`, `activo`, `fecha_creacion`) VALUES
-(1, 1, 'admin', 'admin@sistema.com', '$2a$12$BjHvL.SKljBTCpzxuGskreX6VwK7RaResvGruGC94yY3NCdluRfla', NULL, 1, NULL, 0, NULL, 1, '2025-09-30 17:21:26'),
-(7, 5, 'sabrinacliente', 'sabbaez@gmail.com', '$2y$10$ghUxJZ7Z9C3ZMY67i3QRxu7mnlcSydt3i35O7yi0II4l65k34wkMe', NULL, 2, NULL, 0, NULL, 1, '2025-10-03 00:34:09'),
-(8, 6, 'fabriciocliente', 'fabricio@gmail.com', '$2y$10$cDXFUSjqObpli0UAh5q5CeuKRvT7GfKSqL6fqB5.7PDS3QzWvHq9S', NULL, 2, NULL, 0, NULL, 1, '2025-10-03 00:39:24'),
-(9, 10, 'Salvacliente', 'salvarand@gmail.com', '$2y$10$xpJbg2XmCewX5ulx6/6Vu.QjJsSeMrecO3/Wa.CE.hTKnIOQbA0ym', NULL, 2, NULL, 0, NULL, 1, '2025-10-03 14:13:53'),
-(10, 11, 'alanbeckadmin', 'alanbeck@gmail.com', '$2y$10$Vb/osnBeA9jIDlGDHy6LjOK/3AqHyvqNhS.UFmYaUnCUPcz3m8ez6', NULL, 1, NULL, 0, NULL, 1, '2025-10-03 14:20:27'),
-(11, 12, 'juanperezadmin', 'jperez@gmail.com', '$2y$10$epPN7NK7wxkgU/kfuFD7XO2oGSI5o6Rty/IOqUQQYth3YYfS1xbdS', NULL, 1, NULL, 0, NULL, 1, '2025-10-03 14:30:33');
+INSERT INTO `usuarios` (`id`, `persona_id`, `nombre_usuario`, `email`, `password`, `domicilio`, `ultimo_acceso`, `intentos_fallidos`, `bloqueado_hasta`, `activo`, `fecha_creacion`) VALUES
+(1, 1, 'admin', 'admin@sistema.com', '$2a$12$BjHvL.SKljBTCpzxuGskreX6VwK7RaResvGruGC94yY3NCdluRfla', NULL, NULL, 0, NULL, 1, '2025-09-30 17:21:26'),
+(7, 5, 'sabrinacliente', 'sabbaez@gmail.com', '$2y$10$ghUxJZ7Z9C3ZMY67i3QRxu7mnlcSydt3i35O7yi0II4l65k34wkMe', NULL, NULL, 0, NULL, 1, '2025-10-03 00:34:09'),
+(8, 6, 'fabriciocliente', 'fabricio@gmail.com', '$2y$10$cDXFUSjqObpli0UAh5q5CeuKRvT7GfKSqL6fqB5.7PDS3QzWvHq9S', NULL, NULL, 0, NULL, 1, '2025-10-03 00:39:24'),
+(9, 10, 'Salvacliente', 'salvarand@gmail.com', '$2y$10$xpJbg2XmCewX5ulx6/6Vu.QjJsSeMrecO3/Wa.CE.hTKnIOQbA0ym', NULL, NULL, 0, NULL, 0, '2025-10-03 14:13:53'),
+(10, 11, 'alanbeckadmin', 'alanbeck@gmail.com', '$2y$10$Vb/osnBeA9jIDlGDHy6LjOK/3AqHyvqNhS.UFmYaUnCUPcz3m8ez6', NULL, NULL, 0, NULL, 1, '2025-10-03 14:20:27'),
+(11, 12, 'juanperezadmin', 'jperez@gmail.com', '$2y$10$epPN7NK7wxkgU/kfuFD7XO2oGSI5o6Rty/IOqUQQYth3YYfS1xbdS', NULL, NULL, 0, NULL, 1, '2025-10-03 14:30:33');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `usuarios_perfiles`
+--
+
+CREATE TABLE `usuarios_perfiles` (
+  `id` int(11) NOT NULL,
+  `usuario_id` int(11) NOT NULL COMMENT 'ID del usuario',
+  `perfil_id` int(11) NOT NULL COMMENT 'ID del perfil asignado',
+  `fecha_asignacion` timestamp NOT NULL DEFAULT current_timestamp() COMMENT 'Fecha cuando se asignó el perfil',
+  `asignado_por` int(11) DEFAULT NULL COMMENT 'ID del usuario que realizó la asignación',
+  `activo` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1=Activo, 0=Inactivo'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Relación muchos a muchos entre usuarios y perfiles';
+
+--
+-- Volcado de datos para la tabla `usuarios_perfiles`
+--
+
+INSERT INTO `usuarios_perfiles` (`id`, `usuario_id`, `perfil_id`, `fecha_asignacion`, `asignado_por`, `activo`) VALUES
+(1, 1, 1, '2025-09-30 17:21:26', NULL, 1),
+(2, 7, 2, '2025-10-03 00:34:09', NULL, 1),
+(3, 8, 2, '2025-10-03 00:39:24', NULL, 1),
+(4, 10, 1, '2025-10-03 14:20:27', NULL, 1),
+(5, 11, 1, '2025-10-03 14:30:33', NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -749,10 +780,11 @@ CREATE TABLE `vista_usuarios_completa` (
 ,`nombre_usuario` varchar(50)
 ,`email` varchar(150)
 ,`activo` tinyint(1)
-,`perfil_id` int(11)
-,`perfil_nombre` varchar(45)
 ,`nombres` varchar(100)
 ,`apellidos` varchar(100)
+,`perfiles_nombres` mediumtext
+,`perfiles_data` mediumtext
+,`cantidad_perfiles` bigint(21)
 );
 
 -- --------------------------------------------------------
@@ -798,7 +830,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `vista_usuarios_completa`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_usuarios_completa`  AS SELECT `u`.`id` AS `usuario_id`, `u`.`nombre_usuario` AS `nombre_usuario`, `u`.`email` AS `email`, `u`.`activo` AS `activo`, `u`.`perfil_id` AS `perfil_id`, `p`.`nombre` AS `perfil_nombre`, `per`.`nombres` AS `nombres`, `per`.`apellidos` AS `apellidos` FROM ((`usuarios` `u` join `perfiles` `p` on(`u`.`perfil_id` = `p`.`id`)) join `personas` `per` on(`u`.`persona_id` = `per`.`id`)) ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `vista_usuarios_completa`  AS SELECT `u`.`id` AS `usuario_id`, `u`.`nombre_usuario` AS `nombre_usuario`, `u`.`email` AS `email`, `u`.`activo` AS `activo`, `per`.`nombres` AS `nombres`, `per`.`apellidos` AS `apellidos`, group_concat(distinct `p`.`nombre` order by `p`.`nombre` ASC separator ', ') AS `perfiles_nombres`, group_concat(distinct concat(`p`.`id`,':',`p`.`nombre`) order by `p`.`nombre` ASC separator '|') AS `perfiles_data`, count(distinct `up`.`perfil_id`) AS `cantidad_perfiles` FROM (((`usuarios` `u` left join `personas` `per` on(`u`.`persona_id` = `per`.`id`)) left join `usuarios_perfiles` `up` on(`u`.`id` = `up`.`usuario_id` and `up`.`activo` = 1)) left join `perfiles` `p` on(`up`.`perfil_id` = `p`.`id` and `p`.`estado` = 1)) GROUP BY `u`.`id`, `u`.`nombre_usuario`, `u`.`email`, `u`.`activo`, `per`.`nombres`, `per`.`apellidos` ;
 
 --
 -- Índices para tablas volcadas
@@ -1024,8 +1056,18 @@ ALTER TABLE `usuarios`
   ADD UNIQUE KEY `uk_usuario` (`nombre_usuario`),
   ADD UNIQUE KEY `uk_email` (`email`),
   ADD UNIQUE KEY `uk_persona` (`persona_id`),
-  ADD KEY `perfil_id` (`perfil_id`),
   ADD KEY `idx_activo` (`activo`);
+
+--
+-- Indices de la tabla `usuarios_perfiles`
+--
+ALTER TABLE `usuarios_perfiles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_usuario_perfil` (`usuario_id`,`perfil_id`),
+  ADD KEY `idx_usuario_id` (`usuario_id`),
+  ADD KEY `idx_perfil_id` (`perfil_id`),
+  ADD KEY `idx_activo` (`activo`),
+  ADD KEY `fk_usuarios_perfiles_asignador` (`asignado_por`);
 
 --
 -- Indices de la tabla `ventas`
@@ -1129,7 +1171,7 @@ ALTER TABLE `pedidos`
 -- AUTO_INCREMENT de la tabla `perfiles`
 --
 ALTER TABLE `perfiles`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `personas`
@@ -1190,6 +1232,12 @@ ALTER TABLE `unidades_medida`
 --
 ALTER TABLE `usuarios`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT de la tabla `usuarios_perfiles`
+--
+ALTER TABLE `usuarios_perfiles`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de la tabla `ventas`
@@ -1314,8 +1362,15 @@ ALTER TABLE `reserva`
 -- Filtros para la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  ADD CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`persona_id`) REFERENCES `personas` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `usuarios_ibfk_2` FOREIGN KEY (`perfil_id`) REFERENCES `perfiles` (`id`);
+  ADD CONSTRAINT `usuarios_ibfk_1` FOREIGN KEY (`persona_id`) REFERENCES `personas` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `usuarios_perfiles`
+--
+ALTER TABLE `usuarios_perfiles`
+  ADD CONSTRAINT `fk_usuarios_perfiles_asignador` FOREIGN KEY (`asignado_por`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_usuarios_perfiles_perfil` FOREIGN KEY (`perfil_id`) REFERENCES `perfiles` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_usuarios_perfiles_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `ventas`

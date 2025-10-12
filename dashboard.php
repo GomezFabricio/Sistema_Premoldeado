@@ -148,9 +148,21 @@ $usuario = $auth->getUsuarioLogueado();
                             <?php echo htmlspecialchars($usuario['nombre'] ?? 'Usuario'); ?>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><h6 class="dropdown-header">
-                                <?php echo htmlspecialchars($usuario['perfil_nombre'] ?? 'Sin perfil'); ?>
-                            </h6></li>
+                            <li><h6 class="dropdown-header">Perfiles Asignados:</h6></li>
+                            <?php 
+                            $perfilesUsuario = $usuario['perfiles'] ?? [];
+                            if (!empty($perfilesUsuario)): ?>
+                                <?php foreach ($perfilesUsuario as $perfil): ?>
+                                    <li><span class="dropdown-item-text">
+                                        <i class="fas fa-user-tag me-2 text-primary"></i>
+                                        <?php echo htmlspecialchars($perfil['nombre']); ?>
+                                    </span></li>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <li><span class="dropdown-item-text text-muted">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>Sin perfiles asignados
+                                </span></li>
+                            <?php endif; ?>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item text-danger" href="views/pages/auth/logout.php">
@@ -196,8 +208,12 @@ $usuario = $auth->getUsuarioLogueado();
                     <div class="col-md-6 mb-3">
                         <div class="stats-card">
                             <i class="fas fa-user-shield text-success fa-2x mb-2"></i>
-                            <h5>Perfil Activo</h5>
-                            <p class="text-success mb-0 fw-semibold fs-4"><?php echo htmlspecialchars($usuario['perfil_nombre'] ?? 'Sin perfil'); ?></p>
+                            <h5>Perfiles Asignados</h5>
+                            <?php 
+                            $perfilesCount = count($usuario['perfiles'] ?? []);
+                            $perfilesTexto = $perfilesCount > 0 ? $perfilesCount . ' perfil' . ($perfilesCount > 1 ? 'es' : '') : 'Sin perfiles';
+                            ?>
+                            <p class="text-success mb-0 fw-semibold fs-4"><?php echo $perfilesTexto; ?></p>
                         </div>
                     </div>
                 </div>

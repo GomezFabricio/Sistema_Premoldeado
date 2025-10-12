@@ -90,16 +90,21 @@ class AuthController {
             $_SESSION['perfil_nombre'] = $usuario['perfil_nombre'] ?? 'Sin perfil';
             $_SESSION['login_time'] = time();
             
-            // Obtener módulos del perfil y prepararlos para el menú
+            // ✅ NUEVO: Obtener módulos de TODOS los perfiles del usuario
             try {
-                $modulos = $this->usuarioModel->obtenerModulosPorPerfil($usuario['perfil_id']);
+                $modulos = $this->usuarioModel->obtenerModulosPorUsuario($usuario['id']);
                 
                 // NavigationController se encarga de asignar URLs y configuración
                 require_once __DIR__ . '/NavigationController.php';
                 $_SESSION['modulos'] = NavigationController::prepararModulosParaMenu($modulos);
+                
+                // También guardar los perfiles del usuario
+                $_SESSION['perfiles_usuario'] = $this->usuarioModel->obtenerPerfilesDelUsuario($usuario['id']);
+                
             } catch (Exception $e) {
-                error_log("Error obteniendo módulos para perfil {$usuario['perfil_id']}: " . $e->getMessage());
+                error_log("Error obteniendo módulos para usuario {$usuario['id']}: " . $e->getMessage());
                 $_SESSION['modulos'] = [];
+                $_SESSION['perfiles_usuario'] = [];
             }
             
         } catch (Exception $e) {
@@ -176,8 +181,9 @@ class AuthController {
             'id' => $_SESSION['usuario_id'],
             'nombre' => $_SESSION['usuario_nombre'],
             'email' => $_SESSION['usuario_email'],
-            'perfil_id' => $_SESSION['perfil_id'],
+            'perfil_id' => $_SESSION['perfil_id'], // Mantener por retrocompatibilidad
             'perfil_nombre' => $_SESSION['perfil_nombre'],
+            'perfiles' => $_SESSION['perfiles_usuario'] ?? [], // ✅ NUEVO: Múltiples perfiles
             'modulos' => $_SESSION['modulos'] ?? []
         ];
     }
