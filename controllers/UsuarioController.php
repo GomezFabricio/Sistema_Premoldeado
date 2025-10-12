@@ -135,12 +135,21 @@ class UsuarioController extends BaseController {
      * Mostrar formulario de creación de usuario
      */
     public function crear() {
-        $data = [
-            'titulo' => 'Crear Usuario',
-            'usuario_logueado' => $this->usuario
-        ];
-        
-        $this->render(__DIR__ . '/../views/pages/usuarios/crear_usuario.php', $data);
+        try {
+            // Obtener perfiles disponibles de la base de datos
+            $perfiles = $this->usuarioModel->obtenerPerfiles();
+            
+            $data = [
+                'titulo' => 'Crear Usuario',
+                'usuario_logueado' => $this->usuario,
+                'perfiles' => $perfiles
+            ];
+            
+            $this->render(__DIR__ . '/../views/pages/usuarios/crear_usuario.php', $data);
+            
+        } catch (Exception $e) {
+            $this->redirectToDashboard('Error al cargar formulario: ' . $e->getMessage(), 'error');
+        }
     }
     
     /**
@@ -164,7 +173,7 @@ class UsuarioController extends BaseController {
             $reglas = [
                 'nombre_usuario' => ['required' => true, 'min_length' => 3, 'max_length' => 50],
                 'email' => ['required' => true, 'type' => 'email', 'max_length' => 150],
-                'password' => ['required' => true, 'min_length' => 6, 'max_length' => 255],
+                'password' => ['required' => true, 'min_length' => 8, 'max_length' => 255],
                 'domicilio' => ['max_length' => 200],
                 'perfil_id' => ['required' => true, 'type' => 'numeric']
             ];
@@ -172,6 +181,22 @@ class UsuarioController extends BaseController {
             $errores = $this->validarDatos($datos, $reglas);
             if (!empty($errores)) {
                 $this->establecerMensaje('Errores en el formulario: ' . implode(', ', $errores), 'error');
+                $this->crear();
+                return;
+            }
+            
+            // Validar que no exista el nombre de usuario
+            $usuarioExistente = $this->usuarioModel->validarNombreUsuarioUnico($datos['nombre_usuario']);
+            if ($usuarioExistente) {
+                $this->establecerMensaje('El nombre de usuario "' . $datos['nombre_usuario'] . '" ya está en uso. Por favor, elija otro.', 'error');
+                $this->crear();
+                return;
+            }
+            
+            // Validar que no exista el email (ya se hace en el modelo, pero lo agregamos aquí también para mejor UX)
+            $emailExistente = $this->usuarioModel->validarEmailUnico($datos['email']);
+            if ($emailExistente) {
+                $this->establecerMensaje('El email "' . $datos['email'] . '" ya está registrado. Por favor, use otro email.', 'error');
                 $this->crear();
                 return;
             }
@@ -243,12 +268,28 @@ class UsuarioController extends BaseController {
             ];
             
             if (!empty($datos['password'])) {
-                $reglas['password'] = ['min_length' => 6, 'max_length' => 255];
+                $reglas['password'] = ['min_length' => 8, 'max_length' => 255];
             }
             
             $errores = $this->validarDatos($datos, $reglas);
             if (!empty($errores)) {
                 $this->establecerMensaje('Errores en el formulario: ' . implode(', ', $errores), 'error');
+                $this->editarUsuario($id);
+                return;
+            }
+            
+            // Validar que no exista el nombre de usuario (excluyendo el usuario actual)
+            $usuarioExistente = $this->usuarioModel->validarNombreUsuarioUnico($datos['nombre_usuario'], $id);
+            if ($usuarioExistente) {
+                $this->establecerMensaje('El nombre de usuario "' . $datos['nombre_usuario'] . '" ya está en uso por otro usuario. Por favor, elija otro.', 'error');
+                $this->editarUsuario($id);
+                return;
+            }
+            
+            // Validar que no exista el email (excluyendo el usuario actual)
+            $emailExistente = $this->usuarioModel->validarEmailUnico($datos['email'], $id);
+            if ($emailExistente) {
+                $this->establecerMensaje('El email "' . $datos['email'] . '" ya está registrado por otro usuario. Por favor, use otro email.', 'error');
                 $this->editarUsuario($id);
                 return;
             }

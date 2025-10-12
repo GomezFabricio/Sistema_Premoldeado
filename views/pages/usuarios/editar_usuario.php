@@ -160,7 +160,7 @@
                                         </button>
                                     </div>
                                     <small class="form-text text-muted">
-                                        Solo ingrese si desea cambiar la contraseña (mínimo 6 caracteres)
+                                        Solo ingrese si desea cambiar la contraseña (mínimo 8 caracteres)
                                     </small>
                                 </div>
                                 
@@ -262,9 +262,9 @@
         $('#formEditarUsuario').on('submit', function(e) {
             const password = $('#password').val();
             
-            if (password && password.length < 6) {
+            if (password && password.length < 8) {
                 e.preventDefault();
-                alert('La contraseña debe tener al menos 6 caracteres');
+                alert('La contraseña debe tener al menos 8 caracteres');
                 return false;
             }
         });

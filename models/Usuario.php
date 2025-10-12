@@ -365,6 +365,64 @@ class Usuario {
     }
     
     /**
+     * ✅ NUEVO: Validar que el nombre de usuario sea único
+     * 
+     * @param string $nombreUsuario Nombre de usuario a validar
+     * @param int $excluirId ID del usuario a excluir de la validación (para edición)
+     * @return bool true si ya existe, false si es único
+     */
+    public function validarNombreUsuarioUnico($nombreUsuario, $excluirId = null) {
+        try {
+            if ($excluirId) {
+                // Para edición - excluir el usuario actual
+                $sql = "SELECT persona_id FROM usuarios WHERE nombre_usuario = ? AND persona_id != ? AND activo = 1";
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([$nombreUsuario, $excluirId]);
+            } else {
+                // Para creación - verificar si existe
+                $sql = "SELECT persona_id FROM usuarios WHERE nombre_usuario = ? AND activo = 1";
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([$nombreUsuario]);
+            }
+            
+            return $stmt->fetch() !== false; // true si existe, false si no existe
+            
+        } catch (PDOException $e) {
+            error_log("Error al validar nombre de usuario único: " . $e->getMessage());
+            return false; // En caso de error, permitir continuar
+        }
+    }
+    
+    /**
+     * ✅ NUEVO: Validar que el email sea único
+     * 
+     * @param string $email Email a validar
+     * @param int $excluirId ID del usuario a excluir de la validación (para edición)
+     * @return bool true si ya existe, false si es único
+     */
+    public function validarEmailUnico($email, $excluirId = null) {
+        try {
+            if ($excluirId) {
+                // Para edición - excluir el usuario actual
+                $sql = "SELECT persona_id FROM usuarios WHERE email = ? AND persona_id != ? AND activo = 1";
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([$email, $excluirId]);
+            } else {
+                // Para creación - verificar si existe
+                $sql = "SELECT persona_id FROM usuarios WHERE email = ? AND activo = 1";
+                $stmt = $this->db->prepare($sql);
+                $stmt->execute([$email]);
+            }
+            
+            return $stmt->fetch() !== false; // true si existe, false si no existe
+            
+        } catch (PDOException $e) {
+            error_log("Error al validar email único: " . $e->getMessage());
+            return false; // En caso de error, permitir continuar
+        }
+    }
+    
+    /**
      * Método de instancia para obtener módulos por perfil - SOLO DATOS
      * El controlador se encarga de agregar URLs y configuración
      * 

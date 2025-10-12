@@ -94,6 +94,7 @@
                         <form method="POST" 
                               action="/Sistema_Premoldeado/controllers/UsuarioController.php?a=guardarNuevoUsuario" 
                               id="formCrearUsuario"
+                              novalidate>
                                 
                                 <div class="row">
                                     <!-- Nombre de Usuario -->
@@ -158,7 +159,7 @@
                                                    id="password" 
                                                    name="password" 
                                                    required 
-                                                   minlength="6">
+                                                   minlength="8">
                                             <button class="btn btn-outline-secondary" 
                                                     type="button" 
                                                     onclick="togglePassword('password')">
@@ -169,7 +170,7 @@
                                             </div>
                                         </div>
                                         <small class="form-text text-muted">
-                                            Mínimo 6 caracteres, se recomienda incluir letras y números
+                                            Mínimo 8 caracteres, debe incluir letras y números
                                         </small>
                                     </div>
                                     
@@ -187,7 +188,7 @@
                                                    id="confirmar_password" 
                                                    name="confirmar_password" 
                                                    required 
-                                                   minlength="6">
+                                                   minlength="8">
                                             <button class="btn btn-outline-secondary" 
                                                     type="button" 
                                                     onclick="togglePassword('confirmar_password')">
@@ -210,9 +211,16 @@
                                             </span>
                                             <select class="form-select" id="perfil_id" name="perfil_id" required>
                                                 <option value="">Seleccione un perfil...</option>
-                                                <option value="1">Administrador</option>
-                                                <option value="2">Cliente</option>
-                                                <option value="3">Empleado</option>
+                                                <?php if (!empty($perfiles) && is_array($perfiles)): ?>
+                                                    <?php foreach ($perfiles as $perfil): ?>
+                                                        <option value="<?= htmlspecialchars($perfil['id']) ?>">
+                                                            <?= htmlspecialchars($perfil['nombre']) ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
+                                                    <option value="1">Administrador (Por defecto)</option>
+                                                    <option value="2">Cliente (Por defecto)</option>
+                                                <?php endif; ?>
                                             </select>
                                             <div class="invalid-feedback">
                                                 Por favor, seleccione un perfil.
@@ -335,9 +343,9 @@
                 return false;
             }
             
-            if (password.length < 6) {
+            if (password.length < 8) {
                 e.preventDefault();
-                $('#password')[0].setCustomValidity('La contraseña debe tener al menos 6 caracteres');
+                $('#password')[0].setCustomValidity('La contraseña debe tener al menos 8 caracteres');
                 $('#password').addClass('is-invalid');
                 return false;
             }
