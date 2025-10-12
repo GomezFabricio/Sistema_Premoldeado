@@ -67,23 +67,30 @@ class Usuario {
             $personaId = $this->db->lastInsertId();
             
             // 2. Hashear la contraseña
-            $datos['password'] = password_hash($password, PASSWORD_DEFAULT);
+            $passwordHash = password_hash($password, PASSWORD_DEFAULT);
             
             // 3. Insertar usuario con persona_id
-            $sql = "INSERT INTO usuarios (persona_id, nombre_usuario, email, password, activo, perfil_id) VALUES (?, ?, ?, ?, 1, ?)";
+            $sql = "INSERT INTO usuarios (persona_id, nombre_usuario, email, password, domicilio, perfil_id, activo) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
             $stmt = $this->db->prepare($sql);
             $resultado = $stmt->execute([
                 $personaId,
                 $datos['nombre_usuario'],
                 $datos['email'],
-                $datos['password'],
-                $datos['perfil_id'] ?? 1
+                $passwordHash,
+                $datos['domicilio'] ?? null,
+                $datos['perfil_id'] ?? 1,
+                $datos['activo'] ?? 1
             ]);
             
             if ($resultado) {
                 $usuarioId = $this->db->lastInsertId();
                 $this->db->commit();
-                return $usuarioId;
+                return [
+                    'success' => true,
+                    'message' => 'Usuario creado correctamente',
+                    'id' => $usuarioId
+                ];
             } else {
                 $this->db->rollBack();
                 return [
@@ -233,6 +240,11 @@ class Usuario {
                 $valores[] = password_hash($datos['password'], PASSWORD_DEFAULT);
             }
             
+            if (isset($datos['domicilio'])) {
+                $campos[] = "domicilio = ?";
+                $valores[] = $datos['domicilio'];
+            }
+            
             if (isset($datos['perfil_id'])) {
                 $campos[] = "perfil_id = ?";
                 $valores[] = $datos['perfil_id'];
@@ -253,8 +265,10 @@ class Usuario {
             $stmt = $this->db->prepare($sql);
             $resultado = $stmt->execute($valores);
             
-            if ($resultado) {
+            if ($resultado && $stmt->rowCount() > 0) {
                 return ['success' => true, 'message' => 'Usuario actualizado correctamente'];
+            } elseif ($stmt->rowCount() == 0) {
+                return ['success' => false, 'message' => 'Usuario no encontrado'];
             } else {
                 return ['success' => false, 'message' => 'Error al actualizar el usuario'];
             }
@@ -272,11 +286,19 @@ class Usuario {
         try {
             $sql = "UPDATE usuarios SET activo = 0 WHERE persona_id = ?";
             $stmt = $this->db->prepare($sql);
-            return $stmt->execute([$id]);
+            $resultado = $stmt->execute([$id]);
+            
+            if ($resultado && $stmt->rowCount() > 0) {
+                return ['success' => true, 'message' => 'Usuario desactivado correctamente'];
+            } elseif ($stmt->rowCount() == 0) {
+                return ['success' => false, 'message' => 'Usuario no encontrado'];
+            } else {
+                return ['success' => false, 'message' => 'Error al desactivar el usuario'];
+            }
             
         } catch (PDOException $e) {
             error_log("Error al eliminar usuario: " . $e->getMessage());
-            return false;
+            return ['success' => false, 'message' => 'Error interno del servidor'];
         }
     }
 
@@ -289,8 +311,10 @@ class Usuario {
             $stmt = $this->db->prepare($sql);
             $resultado = $stmt->execute([$id]);
             
-            if ($resultado) {
+            if ($resultado && $stmt->rowCount() > 0) {
                 return ['success' => true, 'message' => 'Usuario dado de baja correctamente'];
+            } elseif ($stmt->rowCount() == 0) {
+                return ['success' => false, 'message' => 'Usuario no encontrado'];
             } else {
                 return ['success' => false, 'message' => 'Error al dar de baja el usuario'];
             }
@@ -310,8 +334,10 @@ class Usuario {
             $stmt = $this->db->prepare($sql);
             $resultado = $stmt->execute([$id]);
             
-            if ($resultado) {
+            if ($resultado && $stmt->rowCount() > 0) {
                 return ['success' => true, 'message' => 'Usuario reactivado correctamente'];
+            } elseif ($stmt->rowCount() == 0) {
+                return ['success' => false, 'message' => 'Usuario no encontrado'];
             } else {
                 return ['success' => false, 'message' => 'Error al reactivar el usuario'];
             }

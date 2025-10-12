@@ -29,11 +29,10 @@ const DataTablesConfig = {
 
     // Configuraciones específicas por tipo de tabla
     usuarios: {
-        "order": [[0, "asc"]],
-        // Auto-detecta columnas por clases CSS y posición
+        "order": [[1, "asc"]], // Ordenar por nombre de usuario
         "autoColumnConfig": true,
         "manualConfig": {
-            "centerColumns": [0, 3, 4, 5], // ID, Estado, Fecha, Acciones
+            "centerColumns": [0, 3, 4, 5], // ID, Perfil, Estado, Acciones
             "nonSortableColumns": [-1] // Última columna (acciones)
         }
     },

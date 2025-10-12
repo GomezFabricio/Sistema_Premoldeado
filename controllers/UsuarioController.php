@@ -148,21 +148,28 @@ class UsuarioController extends BaseController {
      */
     public function guardarNuevoUsuario() {
         try {
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-                $this->redirectToDashboard('Método no permitido', 'error');
-                return;
-            }
+            // Usar función del BaseController
+            $this->verificarMetodo('POST');
             
-            $datos = [
-                'nombre_usuario' => trim($_POST['nombre_usuario'] ?? ''),
-                'email' => trim($_POST['email'] ?? ''),
+            $datos = $this->sanitizarDatos([
+                'nombre_usuario' => $_POST['nombre_usuario'] ?? '',
+                'email' => $_POST['email'] ?? '',
                 'password' => $_POST['password'] ?? '',
+                'domicilio' => $_POST['domicilio'] ?? '',
                 'perfil_id' => (int)($_POST['perfil_id'] ?? 1),
                 'activo' => 1
+            ]);
+            
+            // Usar función del BaseController para validación
+            $reglas = [
+                'nombre_usuario' => ['required' => true, 'min_length' => 3, 'max_length' => 50],
+                'email' => ['required' => true, 'type' => 'email', 'max_length' => 150],
+                'password' => ['required' => true, 'min_length' => 6, 'max_length' => 255],
+                'domicilio' => ['max_length' => 200],
+                'perfil_id' => ['required' => true, 'type' => 'numeric']
             ];
             
-            // Validaciones
-            $errores = $this->validarDatosUsuario($datos);
+            $errores = $this->validarDatos($datos, $reglas);
             if (!empty($errores)) {
                 $this->establecerMensaje('Errores en el formulario: ' . implode(', ', $errores), 'error');
                 $this->crear();
@@ -215,21 +222,31 @@ class UsuarioController extends BaseController {
      */
     private function actualizarUsuario($id) {
         try {
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-                $this->redirectToDashboard('Método no permitido', 'error');
-                return;
-            }
+            // Usar función del BaseController
+            $this->verificarMetodo('POST');
             
             $datos = [
                 'nombre_usuario' => trim($_POST['nombre_usuario'] ?? ''),
                 'email' => trim($_POST['email'] ?? ''),
                 'password' => $_POST['password'] ?? '',
+                'domicilio' => trim($_POST['domicilio'] ?? ''),
                 'perfil_id' => (int)($_POST['perfil_id'] ?? 1),
-                'activo' => isset($_POST['activo']) ? 1 : 0
+                'activo' => (int)($_POST['activo'] ?? 1)
             ];
             
-            // Validaciones
-            $errores = $this->validarDatosUsuario($datos, true);
+            // Usar función del BaseController para validación
+            $reglas = [
+                'nombre_usuario' => ['required' => true, 'min_length' => 3, 'max_length' => 50],
+                'email' => ['required' => true, 'type' => 'email', 'max_length' => 150],
+                'domicilio' => ['max_length' => 200],
+                'perfil_id' => ['required' => true, 'type' => 'numeric']
+            ];
+            
+            if (!empty($datos['password'])) {
+                $reglas['password'] = ['min_length' => 6, 'max_length' => 255];
+            }
+            
+            $errores = $this->validarDatos($datos, $reglas);
             if (!empty($errores)) {
                 $this->establecerMensaje('Errores en el formulario: ' . implode(', ', $errores), 'error');
                 $this->editarUsuario($id);
@@ -257,16 +274,22 @@ class UsuarioController extends BaseController {
      */
     private function eliminarUsuario($id) {
         try {
+            // Validar que el ID sea numérico
+            if (!is_numeric($id) || $id <= 0) {
+                $this->redirectToController('Usuario', 'index', [], 'ID de usuario inválido', 'error');
+                return;
+            }
+            
             $resultado = $this->usuarioModel->darDeBaja($id);
             
             if ($resultado['success']) {
-                $this->redirectToController('Usuario', 'index', [], 'Usuario eliminado exitosamente', 'success');
+                $this->redirectToController('Usuario', 'index', [], 'Usuario desactivado exitosamente', 'success');
             } else {
                 $this->redirectToController('Usuario', 'index', [], $resultado['message'], 'error');
             }
             
         } catch (Exception $e) {
-            $this->redirectToController('Usuario', 'index', [], 'Error al eliminar usuario: ' . $e->getMessage(), 'error');
+            $this->redirectToController('Usuario', 'index', [], 'Error al desactivar usuario: ' . $e->getMessage(), 'error');
         }
     }
     
@@ -275,6 +298,12 @@ class UsuarioController extends BaseController {
      */
     private function reactivarUsuario($id) {
         try {
+            // Validar que el ID sea numérico
+            if (!is_numeric($id) || $id <= 0) {
+                $this->redirectToController('Usuario', 'index', [], 'ID de usuario inválido', 'error');
+                return;
+            }
+            
             $resultado = $this->usuarioModel->reactivar($id);
             
             if ($resultado['success']) {
@@ -288,30 +317,7 @@ class UsuarioController extends BaseController {
         }
     }
     
-    /**
-     * Validar datos de usuario
-     */
-    private function validarDatosUsuario($datos, $esActualizacion = false) {
-        $errores = [];
-        
-        if (empty($datos['nombre_usuario'])) {
-            $errores[] = 'El nombre de usuario es requerido';
-        }
-        
-        if (empty($datos['email']) || !filter_var($datos['email'], FILTER_VALIDATE_EMAIL)) {
-            $errores[] = 'El email es requerido y debe ser válido';
-        }
-        
-        if (!$esActualizacion && empty($datos['password'])) {
-            $errores[] = 'La contraseña es requerida';
-        }
-        
-        if (!empty($datos['password']) && strlen($datos['password']) < 6) {
-            $errores[] = 'La contraseña debe tener al menos 6 caracteres';
-        }
-        
-        return $errores;
-    }
+
     
     // ============================================================================
     // GESTIÓN DE PERFILES
